@@ -386,6 +386,124 @@ def s6():
     return "".join(o)
 
 
+# ---------------- ジャンル・メーカーから選ぶ（2026-11-07 追加の案） ----------------
+
+def seg(y, active):
+    """「ジャンルから / メーカーから」の切り替え"""
+    o = [r(20, y, 350, 40, 6, "#C9CED3")]
+    for i, name in enumerate(["ジャンルから", "メーカーから"]):
+        x = 22 + i * 174
+        if i == active:
+            o.append(r(x, y + 2, 172, 36, 5, WHITE))
+        o.append(t(x + 86, y + 25, name, 15, INK if i == active else SUB, 700 if i == active else 500, "middle"))
+    return "".join(o)
+
+
+def search_box(y, text, ph=False):
+    return (r(20, y, 350, 48, 6, WHITE, INK, 1.5) + icon("search", 44, y + 24, INK)
+            + t(62, y + 30, text, 16, FAINT if ph else INK))
+
+
+def nav_rows(y0, rows, h=56):
+    o = []
+    for i, (name, sub, cnt) in enumerate(rows):
+        y = y0 + i * (h + 1)
+        o.append(r(0, y, W, h, 0, PANEL))
+        if sub:
+            o.append(t(20, y + 25, name, 16, INK, 600) + t(20, y + 45, sub, 12.5, SUB))
+        else:
+            o.append(t(20, y + h / 2 + 6, name, 16, INK, 500))
+        o.append(t(348, y + h / 2 + 5, cnt, 13, SUB, 400, "end") + icon("chev", 360, y + h / 2, FAINT))
+    return "".join(o)
+
+
+def b1():
+    o = [status_bar(), icon("back", 24, 72, INK), t(36, 78, "機材", 16, INK, 500)]
+    o.append(t(20, 124, "機材を追加", 28, INK, 700))
+    o.append(search_box(144, "機種名やメーカーで探す", True))
+    o.append(seg(208, 0))
+    rows = [("映像", "スイッチャー、カメラ、プロジェクター…", "5,970"),
+            ("音響", "ミキサー、ワイヤレスマイク、スピーカー…", "4,354"),
+            ("照明", "照明卓、ムービング、LED灯体…", "943"),
+            ("配信", "エンコーダ、キャプチャ、NDI機器…", "557"),
+            ("PC", "ノートPC、書画カメラ、プレゼン周辺…", "332"),
+            ("通信", "インカム、無線機、タリー", "249"),
+            ("電源・特機", "電源、発電機・UPS", "187")]
+    o.append(nav_rows(264, rows, 62))
+    o.append(t(20, 727, "数字は機種の数。無ければ手で入力できます。", 12.5, SUB))
+    o.append(home_ind())
+    return "".join(o)
+
+
+def b2():
+    o = [status_bar(), icon("back", 24, 72, INK), t(36, 78, "機材を追加", 16, INK, 500)]
+    o.append(t(20, 124, "映像", 28, INK, 700))
+    o.append(search_box(144, "映像の中で探す", True))
+    rows = [("モニター・ディスプレイ", None, "1,544"), ("カメラ", None, "635"), ("プロジェクター", None, "571"),
+            ("延長器", None, "444"), ("コンバーター・分配", None, "415"), ("スイッチャー", None, "396"),
+            ("映像レンズ", None, "342"), ("分配器", None, "301"), ("LEDビジョン", None, "255"),
+            ("レコーダー", None, "201")]
+    o.append(section_title(226, "種類（機種の多い順）"))
+    o.append(nav_rows(238, rows, 52))
+    o.append(r(0, 768, W, 76, 0, CASE) + t(20, 790, "ほか10種類", 13, SUB))
+    o.append(home_ind())
+    return "".join(o)
+
+
+def chips(y, items, active=0):
+    o = []
+    x = 20
+    for i, name in enumerate(items):
+        w = len(name) * 8.2 + 26 if name.isascii() else len(name) * 14 + 26
+        if i == active:
+            o.append(r(x, y, w, 34, 17, INK) + t(x + w / 2, y + 22, name, 14, WHITE, 600, "middle"))
+        else:
+            o.append(r(x, y, w, 34, 17, WHITE, RULE, 1.2) + t(x + w / 2, y + 22, name, 14, INK, 500, "middle"))
+        x += w + 8
+    return "".join(o)
+
+
+def b3():
+    o = [status_bar(), icon("back", 24, 72, INK), t(36, 78, "映像", 16, INK, 500)]
+    o.append(t(20, 124, "スイッチャー", 28, INK, 700))
+    o.append(t(20, 150, "396機種", 13, SUB))
+    o.append(search_box(166, "スイッチャーの中で探す", True))
+    o.append(t(20, 244, "メーカーで絞る", 13, SUB, 600))
+    o.append(chips(256, ["すべて", "Roland", "Blackmagic Design", "Panasonic", "Sony"], 1))
+    o.append(section_title(326, "Roland（32機種）"))
+    items = [("V-160HD", "製品ページで確認（推定）"), ("V-80HD", "製品ページで確認（推定）"),
+             ("V-8HD", "製品ページで確認（推定）"), ("V-1HD+", "製品ページで確認（推定）"),
+             ("V-1SDI", "製品ページで確認（推定）"), ("V-02HD MK II", "製品ページで確認（推定）"),
+             ("VR-120HD", "製品ページで確認（推定）")]
+    for i, (n, c) in enumerate(items):
+        y = 338 + i * 60
+        o.append(r(0, y, W, 59, 0, PANEL))
+        o.append(t(20, y + 27, n, 16, INK, 500) + t(20, y + 47, c, 12.5, SUB))
+    o.append(home_ind())
+    return "".join(o)
+
+
+def b4():
+    o = [status_bar(), icon("back", 24, 72, INK), t(36, 78, "機材", 16, INK, 500)]
+    o.append(t(20, 124, "機材を追加", 28, INK, 700))
+    o.append(search_box(144, "機種名やメーカーで探す", True))
+    o.append(seg(208, 1))
+    o.append(section_title(282, "持っている機材のメーカー"))
+    o.append(nav_rows(294, [("Blackmagic Design", None, "219"), ("Roland", None, "141")], 52))
+    o.append(section_title(424, "A"))
+    o.append(nav_rows(436, [("Adder", None, "12"), ("AJA", None, "64"), ("Allen & Heath", None, "47"),
+                            ("Analog Way", None, "58")], 52))
+    o.append(section_title(662, "B"))
+    o.append(nav_rows(674, [("Barco", None, "88")], 52))
+    # 右端の索引（なぞって飛ぶ）
+    letters = list("ABCDEFGHIJKLMNOPRSTUVWYZ") + ["あ"]
+    for i, ch in enumerate(letters):
+        o.append(t(380, 300 + i * 18.5, ch, 10.5, INK, 600, "middle"))
+    o.append(r(0, 768, W, 76, 0, CASE) + t(20, 790, "811社。英字のあとに日本語のメーカー（五十音順）", 12.5, SUB))
+    o.append(home_ind())
+    return "".join(o)
+
+
 def sheet(screens, title, path):
     n = len(screens)
     tw = n * W + (n + 1) * GAP
@@ -410,3 +528,5 @@ if __name__ == "__main__":
     sheet([("S8", "1台ごとの台帳", s8), ("S7", "書き出し", s7)], "台帳と書き出し", d / "design-ledger.svg")
     sheet([("S0", "はじめに", s0), ("S3", "機材を追加", s3), ("S6", "設定", s6)],
           "そのほかの画面", d / "design-sub.svg")
+    sheet([("B1", "ジャンルから選ぶ", b1), ("B2", "ジャンルの中の種類", b2), ("B3", "種類の中の機種", b3), ("B4", "メーカーから選ぶ", b4)],
+          "機材を追加：ジャンル・メーカーから選ぶ（案）", d / "design-browse.svg")

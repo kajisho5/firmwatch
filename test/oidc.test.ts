@@ -36,6 +36,9 @@ describe('GitHub Actions の証明', () => {
     const forged = `${h}.${enc({ iss: 'https://token.actions.githubusercontent.com', aud: 'firmwatch', exp: 9e9, repository: 'kajisho5/firmwatch', ref: 'refs/heads/main', sub: 'x' })}.${s}`;
     await expect(verifyGithubOidc(forged, 'kajisho5/firmwatch', keys)).rejects.toThrow();
   });
+  it('壊れた証明は 401 で断る', async () => {
+    await expect(verifyGithubOidc('aaa.bbb.ccc', 'kajisho5/firmwatch', keys)).rejects.toMatchObject({ status: 401 });
+  });
   it('知らない鍵の証明は断る', async () => {
     await expect(verifyGithubOidc(await token({}, 'unknown'), 'kajisho5/firmwatch', keys)).rejects.toThrow();
   });

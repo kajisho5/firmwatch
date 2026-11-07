@@ -36,7 +36,8 @@ export async function verifyGithubOidc(token: string, repo: string, getKeys: (fo
   const parts = token.split('.');
   if (parts.length !== 3) throw new HttpError(401, '証明の形が違います。');
   const dec = (s: string) => JSON.parse(new TextDecoder().decode(fromB64url(s)));
-  const header = dec(parts[0]), claims = dec(parts[1]);
+  let header: any, claims: any;
+  try { header = dec(parts[0]); claims = dec(parts[1]); } catch { throw new HttpError(401, '証明の形が違います。'); }
   if (header.alg !== 'RS256') throw new HttpError(401, '証明の形が違います。');
   let jwk = (await getKeys()).find(k => (k as any).kid === header.kid);
   if (!jwk) jwk = (await getKeys(true)).find(k => (k as any).kid === header.kid);

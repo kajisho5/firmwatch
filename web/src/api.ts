@@ -25,7 +25,7 @@ export type GearState = 'old' | 'ok' | 'unset' | 'manual' | 'stopped' | 'unknown
 export interface Gear {
   id: string; model_id: number | null; maker: string; model: string; sub: string;
   source_key: string | null; source_label: string | null; page_url: string | null; checked_at: number | null;
-  source_error: string | null; estimated: boolean;
+  source_error: string | null; estimated: boolean; latest_by: 'official' | 'page' | 'community' | null;
   asset_no: string | null; serial: string | null; purchased_on: string | null; purchased_from: string | null;
   current_version: string | null; last_updated_on: string | null; note: string | null; created_at: number;
   latest: { version: string; title: string; released_at: number | null; url: string } | null;
@@ -35,7 +35,7 @@ export interface Gear {
 export interface Alert {
   id: string; severity: 'now' | 'later'; created_at: number; read_at: number | null;
   source_key: string; version: string; title: string; notes: string; url: string; released_at: number | null;
-  source_label: string; is_os: boolean; units: number; models: string[]; from: string | null;
+  source_label: string; is_os: boolean; is_community: boolean; units: number; models: string[]; from: string | null;
 }
 
 export interface Me {

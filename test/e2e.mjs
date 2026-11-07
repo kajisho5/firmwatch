@@ -176,6 +176,18 @@ assert.equal((await b(`/api/gear/${u0}`)).status, 404);
 assert.equal((await b('/api/gear')).data.gear.length, 0);
 assert.equal((await b('/api/alerts')).data.alerts.length, 0); ok('ほかの人の機材・通知は見えない');
 
+// 利用者の記録：b も同じ Roland を持っていて、a が新しいバージョンに更新したと記録する
+await b('/api/gear', { body: { model_id: roland.id, current_version: '3.5' } });
+const ra = (await a('/api/gear')).data.gear.find(g => g.model_id === roland.id);
+await a(`/api/gear/${ra.id}/updates`, { body: { to_version: '3.70', updated_on: '2026-11-07' } });
+const bg = (await b('/api/gear')).data.gear.find(g => g.model_id === roland.id);
+assert.equal(bg.latest.version, '3.70'); assert.equal(bg.latest_by, 'community'); assert.equal(bg.state, 'old'); ok('ほかの人の記録で、古い台が分かる（利用者の記録）');
+const ba = (await b('/api/alerts')).data.alerts.find(x => x.version === '3.70');
+assert.ok(ba && ba.is_community && ba.severity === 'later'); assert.ok(!JSON.stringify(ba).includes('テスト太郎')); ok('「あとで見る」で知らせ、誰が記録したかは出さない');
+assert.ok(!(await a('/api/alerts')).data.alerts.some(x => x.version === '3.70')); ok('記録した本人には知らせない');
+await b(`/api/gear/${bg.id}/updates`, { body: { to_version: '3.1', updated_on: '2026-11-07' } });
+assert.equal((await b('/api/models/' + roland.id)).data.releases.filter(r => r.community).length, 1); ok('古いバージョンの記録では増えない');
+
 // 消す
 assert.equal((await a(`/api/gear/${u0}`, { method: 'DELETE' })).status, 200);
 assert.equal((await a(`/api/gear/${u0}`)).status, 404); ok('台を消せる');

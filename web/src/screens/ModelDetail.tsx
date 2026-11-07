@@ -6,7 +6,7 @@ import { go } from '../router';
 
 interface Detail {
   model: { id: number; maker: string; model: string; sub: string; maker_url: string | null; source_key: string | null; source_label: string | null; page_url: string | null; source_ok: number | null; source_error: string | null; checked_at: number | null; estimated: boolean };
-  releases: { version: string; title: string; released_at: number | null; notes: string; url: string; severity: string }[];
+  releases: { version: string; title: string; released_at: number | null; notes: string; url: string; severity: string; community: number }[];
   units: Gear[];
 }
 
@@ -28,7 +28,7 @@ export function ModelDetail({ id }: { id: string }) {
           <div className="mt-4 bg-panel px-5 py-4">
             {latest ? (
               <>
-                <p className="text-[13px] text-sub">{d.model.estimated ? 'メーカーの製品ページに載っているバージョン（推定）' : `公開されている最新${d.model.source_label ? `（${d.model.source_label}）` : ''}`}</p>
+                <p className="text-[13px] text-sub">{latest.community ? 'ほかの利用者が記録した最新（メーカーの公開情報ではありません）' : d.model.estimated ? 'メーカーの製品ページに載っているバージョン（推定）' : `公開されている最新${d.model.source_label ? `（${d.model.source_label}）` : ''}`}</p>
                 <p className="mt-1 flex items-baseline gap-4"><span className="text-[32px] font-bold leading-none">{latest.version}</span>
                   {latest.released_at && <span className="text-[14px] text-sub">{fmtDate(latest.released_at)}に公開</span>}</p>
               </>
@@ -72,7 +72,7 @@ export function ModelDetail({ id }: { id: string }) {
                   <details key={r.version} className="bg-panel">
                     <summary className="flex min-h-[51px] cursor-pointer list-none items-center gap-4 px-5">
                       <span className="w-[72px] flex-none text-[16px] font-bold">{r.version}</span>
-                      <span className="min-w-0 flex-1 truncate text-[14px] text-sub">{r.title}</span>
+                      <span className="min-w-0 flex-1 truncate text-[14px] text-sub">{r.community ? '利用者の記録' : r.title}</span>
                       <span className="flex-none text-[13px] text-faint">{r.released_at ? fmtDate(r.released_at, 'short') : ''}</span>
                     </summary>
                     <p className="px-5 pb-4 text-[14px] leading-[1.7] text-sub">{r.notes || '内容の説明はありません。'}</p>

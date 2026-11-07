@@ -69,7 +69,7 @@ export function Updates() {
                 {!a.is_os && (
                   <p className={`mt-1 text-[15px] ${dim ? 'text-faint' : 'text-sub'}`}>
                     {a.from && <>{a.from} <span className="text-faint">→</span> </>}<b className={dim ? '' : 'text-ink'}>{a.version}</b>
-                    <span className="ml-2 text-[13px] text-faint">{a.source_label}</span>
+                    <span className="ml-2 text-[13px] text-faint">{a.is_community ? '利用者の記録' : a.source_label}</span>
                   </p>
                 )}
                 <p className={`mt-1.5 text-[14px] leading-[1.6] ${dim ? 'text-faint' : 'text-sub'}`}>

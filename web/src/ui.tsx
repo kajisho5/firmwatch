@@ -9,8 +9,8 @@ export function Lamp({ state, w = 14, h = 14, quiet = false, className = '' }: {
 
 export const lampOf = (s: GearState): 'red' | 'green' | 'off' => (s === 'old' ? 'red' : s === 'ok' ? 'green' : 'off');
 
-export function stateText(g: { state: GearState; current_version: string | null; latest: { version: string } | null; source_error?: string | null; estimated?: boolean }) {
-  const est = g.estimated ? '（推定）' : '';
+export function stateText(g: { state: GearState; current_version: string | null; latest: { version: string } | null; source_error?: string | null; estimated?: boolean; latest_by?: string | null }) {
+  const est = g.latest_by === 'community' ? '（利用者の記録）' : g.estimated ? '（推定）' : '';
   switch (g.state) {
     case 'old': return `最新は ${g.latest!.version}${est}。手元は ${g.current_version}`;
     case 'ok': return `最新の ${g.current_version}${est}`;

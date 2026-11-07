@@ -156,11 +156,11 @@ def s1():
             g.append(t(36, yy + i * 22, s, 14, SUB if not dim else FAINT))
         return "".join(g)
 
-    o.append(row(162, 128, "red", "macOS 27.1 が公開", None,
+    o.append(row(162, 128, "red", "macOS の新しいバージョン", None,
                  ["操作ソフトを使う機材が3台あります。", "対応を確かめてから上げてください。"], "今朝"))
-    o.append(row(298, 120, "red", "ATEM Mini Pro", ("10.1.2", "10.2"),
+    o.append(row(298, 120, "red", "サンプル SW-4", ("10.1.2", "10.2"),
                  ["不具合の修正が含まれています。"], "昨日"))
-    o.append(row(426, 120, "off", "V-160HD RCS", ("4.1.0", "4.2.0"),
+    o.append(row(426, 120, "off", "サンプル CS-2", ("4.1.0", "4.2.0"),
                  ["11月3日に確認済み。"], "11/03", dim=True))
     o.append(t(20, 580, "赤いランプは、まだ確認していない更新です。", 13, SUB))
     o.append(t(20, 601, "確認が要るかは、更新内容の文言から自動で決めています。", 13, SUB))
@@ -185,22 +185,22 @@ def s2():
             g.append(icon("chev", 360, ry + 31, FAINT))
         return "".join(g)
 
-    o.append(group(174, "Blackmagic Design", [
-        ("ATEM Mini Pro（2台）", "1台が古いバージョンのまま。最新は 10.2", "red"),
-        ("ATEM Television Studio HD8", "最新の 10.2", "green"),
-        ("HyperDeck Studio HD Mini", "最新の 9.0", "green")]))
-    o.append(group(398, "Roland", [
-        ("V-160HD RCS", "最新は 4.2.0。手元は 4.1.0", "red"),
-        ("VR-6HD", "最新の 3.1", "green"),
-        ("V-1HD+", "公開ページを読めず、確認が止まっています", "off")]))
+    o.append(group(174, "サンプル映像（架空のメーカー）", [
+        ("サンプル SW-4（2台）", "1台が古いバージョンのまま。最新は 10.2", "red"),
+        ("サンプル SW-8", "最新の 10.2", "green"),
+        ("サンプル RD-1", "最新の 9.0", "green")]))
+    o.append(group(398, "テスト音響（架空のメーカー）", [
+        ("サンプル CS-2", "最新は 4.2.0。手元は 4.1.0", "red"),
+        ("サンプル MX-6", "最新の 3.1", "green"),
+        ("サンプル SW-1", "公開ページを読めず、確認が止まっています", "off")]))
     o.append(tab_bar(1))
     return "".join(o)
 
 
 def s4():
     o = [status_bar(), icon("back", 24, 72, INK), t(36, 78, "機材", 16, INK, 500)]
-    o.append(t(20, 124, "ATEM Mini Pro", 28, INK, 700))
-    o.append(t(20, 150, "Blackmagic Design の映像スイッチャー", 14, SUB))
+    o.append(t(20, 124, "サンプル SW-4", 28, INK, 700))
+    o.append(t(20, 150, "サンプル映像の映像スイッチャー", 14, SUB))
     o.append(r(0, 170, W, 92, 0, PANEL))
     o.append(t(20, 198, "公開されている最新", 13, SUB))
     o.append(t(20, 238, "10.2", 32, INK, 700))
@@ -228,7 +228,7 @@ def s4():
 
 
 def s8():
-    o = [status_bar(), icon("back", 24, 72, INK), t(36, 78, "ATEM Mini Pro", 16, INK, 500)]
+    o = [status_bar(), icon("back", 24, 72, INK), t(36, 78, "サンプル SW-4", 16, INK, 500)]
     o.append(t(20, 124, "A-01", 30, INK, 700))
     o.append(lamp(96, 102, 14, 14, "red"))
     o.append(t(370, 122, "編集", 16, INK, 600, "end"))
@@ -261,7 +261,7 @@ def s7():
     o.append(r(20, 182, 175, 44, 6, INK) + r(170, 182, 25, 44, 0, INK))
     o.append(t(107, 210, "Excel", 16, WHITE, 600, "middle") + t(282, 210, "CSV", 16, INK, 600, "middle"))
     o.append(section_title(262, "どの機材を"))
-    opts = [("すべて", "8台", True), ("Blackmagic Design だけ", "3台", False), ("確認が要る更新があるもの", "2台", False)]
+    opts = [("すべて", "8台", True), ("サンプル映像だけ", "3台", False), ("確認が要る更新があるもの", "2台", False)]
     for i, (a, b, sel) in enumerate(opts):
         y = 274 + i * 52
         o.append(r(0, y, W, 51, 0, PANEL))
@@ -309,12 +309,12 @@ def s0():
 def s3():
     o = [status_bar(), icon("back", 24, 72, INK), t(36, 78, "機材", 16, INK, 500)]
     o.append(t(20, 124, "機材を追加", 28, INK, 700))
-    o.append(r(20, 144, 350, 48, 6, WHITE, INK, 1.5) + icon("search", 44, 168, INK) + t(62, 174, "ATEM Mini", 16, INK))
-    o.append(r(146, 158, 1.6, 22, 0, INK))
-    o.append(t(20, 222, "14,711機種から探せます。無ければ手で入力できます。", 12.5, SUB))
-    items = [("ATEM Mini", "映像スイッチャー", False), ("ATEM Mini Pro", "映像スイッチャー", True),
-             ("ATEM Mini Pro ISO", "映像スイッチャー", False), ("ATEM Mini Extreme ISO", "映像スイッチャー", False)]
-    o.append(section_title(256, "Blackmagic Design"))
+    o.append(r(20, 144, 350, 48, 6, WHITE, INK, 1.5) + icon("search", 44, 168, INK) + t(62, 174, "サンプル SW-2", 16, INK))
+    o.append(r(176, 158, 1.6, 22, 0, INK))
+    o.append(t(20, 222, "機種名やメーカーで探せます。無ければ手で入力できます。", 12.5, SUB))
+    items = [("サンプル SW-2", "映像スイッチャー", False), ("サンプル SW-4", "映像スイッチャー", True),
+             ("サンプル SW-4 ISO", "映像スイッチャー", False), ("サンプル SW-8 ISO", "映像スイッチャー", False)]
+    o.append(section_title(256, "サンプル映像（架空のメーカー）"))
     for i, (n, c, sel) in enumerate(items):
         y = 268 + i * 60
         o.append(r(0, y, W, 59, 0, WHITE if sel else PANEL))
@@ -343,9 +343,9 @@ def s5():
     o.append(t(46, 255, "まだ確認していない更新が2件", 15, INK, 700))
     o.append(t(46, 277, "上げるか、今のバージョンのまま行くかを決めておきましょう。", 12.5, SUB))
     o.append(section_title(326, "持っていく機材"))
-    rows = [("ATEM Mini Pro（A-01）", "10.1.2 → 最新は 10.2", "red"),
-            ("V-160HD RCS", "4.1.0 → 最新は 4.2.0", "red"),
-            ("HyperDeck Studio HD Mini", "最新の 9.0", "green")]
+    rows = [("サンプル SW-4（A-01）", "10.1.2 → 最新は 10.2", "red"),
+            ("サンプル CS-2", "4.1.0 → 最新は 4.2.0", "red"),
+            ("サンプル RD-1", "最新の 9.0", "green")]
     for i, (n, s, st) in enumerate(rows):
         y = 338 + i * 62
         o.append(r(0, y, W, 61, 0, PANEL) + lamp(20, y + 23, 14, 14, st, glow=st == "red"))
@@ -472,7 +472,7 @@ def b3():
     o.append(chips(256, ["すべて", "Roland", "Blackmagic Design", "Panasonic", "Sony"], 1))
     o.append(section_title(326, "Roland（32機種）"))
     items = [("V-160HD", "製品ページで確認（推定）"), ("V-80HD", "製品ページで確認（推定）"),
-             ("V-8HD", "製品ページで確認（推定）"), ("V-1HD+", "製品ページで確認（推定）"),
+             ("V-8HD", "製品ページで確認（推定）"), ("サンプル SW-1", "製品ページで確認（推定）"),
              ("V-1SDI", "製品ページで確認（推定）"), ("V-02HD MK II", "製品ページで確認（推定）"),
              ("VR-120HD", "製品ページで確認（推定）")]
     for i, (n, c) in enumerate(items):

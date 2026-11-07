@@ -1,6 +1,6 @@
 <p align="center"><img src="web/public/icon-192.png" width="96" alt=""></p>
 
-<h1 align="center">FIRMWATCH</h1>
+<p align="center"><img src="docs/logo/kit/lockup-horizontal.svg" height="48" alt="FIRMWATCH"></p>
 
 <p align="center">持っている機材のファームウェアを管理し、新しいバージョンが出たらスマホに通知します。</p>
 

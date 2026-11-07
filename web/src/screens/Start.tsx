@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { startRegistration, startAuthentication, browserSupportsWebAuthn } from '@simplewebauthn/browser';
 import { api } from '../api';
-import { Lamp, Button, ErrorNote, inputCls, SectionTitle, List } from '../ui';
+import { Button, ErrorNote, inputCls, SectionTitle, List } from '../ui';
 import { isIOS, isStandalone } from '../push';
 
 export function Start({ onDone }: { onDone: (recoveryCode?: string) => void }) {
@@ -43,9 +43,8 @@ export function Start({ onDone }: { onDone: (recoveryCode?: string) => void }) {
 
   return (
     <div className="safe-top mx-auto min-h-dvh max-w-[560px] bg-case pb-10">
-      <div className="flex items-center gap-3 px-5 pt-10">
-        <Lamp state="red" w={30} h={20} className="lamp-blink" />
-        <span className="text-[20px] font-bold tracking-[0.05em]">FIRMWATCH</span>
+      <div className="px-5 pt-10">
+        <img src="/logo.svg" alt="FIRMWATCH" className="h-[30px] w-auto" />
       </div>
       <h1 className="px-5 pt-8 text-[30px] font-bold leading-[1.33]">機材のファームを、<br />まとめて見張る。</h1>
       <p className="px-5 pt-4 text-[15px] leading-[1.6] text-sub">持っている機材を登録すると、ファームやソフトの新しいバージョンが出たときに通知します。</p>

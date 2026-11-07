@@ -1,0 +1,43 @@
+{
+  "name": "firmwatch",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite build && wrangler dev",
+    "build": "vite build",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "db:migrate:local": "wrangler d1 migrations apply firmwatch --local",
+    "check": "node checker/run.mjs",
+    "catalog": "python3 -I tools/import_holdline_catalog.py",
+    "test:e2e": "./scripts/e2e.sh",
+    "seed": "python3 -I tools/build_seed.py"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261107.1",
+    "@fontsource/ibm-plex-sans-jp": "^5.3.1",
+    "@simplewebauthn/browser": "^14.0.0",
+    "@simplewebauthn/server": "^14.1.0",
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "hono": "^4.13.17",
+    "playwright": "^1.65.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.6",
+    "vite-plugin-pwa": "^2.0.0",
+    "vitest": "^5.1.0",
+    "web-push": "^4.0.0",
+    "workbox-precaching": "^7.4.1",
+    "workbox-routing": "^7.4.1",
+    "workbox-strategies": "^7.4.1",
+    "workbox-window": "^7.4.1",
+    "wrangler": "^4.158.0",
+    "write-excel-file": "^4.1.1"
+  }
+}

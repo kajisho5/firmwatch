@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable", "WebWorker"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noImplicitAny": false,
+    "allowJs": true,
+    "checkJs": false,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "types": ["@cloudflare/workers-types", "vite/client", "vite-plugin-pwa/client"],
+    "noEmit": true
+  },
+  "include": ["worker/src", "web/src", "shared"]
+}

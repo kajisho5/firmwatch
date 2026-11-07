@@ -1,0 +1,39 @@
+{
+  "_説明": "自動で確認する取得先と、機種名から取得先を決めるルール。rules は上から順に当てはめる。maker と pattern（正規表現、大文字小文字を区別しない）が合えば source に結びつける。どれにも合わない機種は手で記録する扱い。",
+  "sources": [
+    {"key": "bmd:atem:ATEM Switchers", "label": "ATEM Switchers", "page": "https://www.blackmagicdesign.com/jp/support/family/atem-live-production-switchers"},
+    {"key": "bmd:hyperdeck:HyperDeck", "label": "HyperDeck", "page": "https://www.blackmagicdesign.com/jp/support/family/disk-recorders"},
+    {"key": "bmd:videoassist:Blackmagic Video Assist", "label": "Blackmagic Video Assist", "page": "https://www.blackmagicdesign.com/jp/support/family/disk-recorders"},
+    {"key": "bmd:videohub:Blackmagic Videohub", "label": "Blackmagic Videohub", "page": "https://www.blackmagicdesign.com/jp/support/family/routing-and-distribution"},
+    {"key": "bmd:multiview:MultiView", "label": "MultiView", "page": "https://www.blackmagicdesign.com/jp/support/family/multiview-monitoring"},
+    {"key": "bmd:smartview:SmartView", "label": "SmartView", "page": "https://www.blackmagicdesign.com/jp/support/family/video-and-audio-monitoring"},
+    {"key": "bmd:converters:Blackmagic Converters", "label": "Blackmagic Converters", "page": "https://www.blackmagicdesign.com/jp/support/family/broadcast-and-atem-converters"},
+    {"key": "bmd:teranex:Teranex", "label": "Teranex", "page": "https://www.blackmagicdesign.com/jp/support/family/standards-conversion"},
+    {"key": "bmd:web-presenter:Blackmagic Streaming", "label": "Blackmagic Streaming", "page": "https://www.blackmagicdesign.com/jp/support/family/streaming-and-encoding"},
+    {"key": "bmd:desktop-video:Desktop Video", "label": "Desktop Video", "page": "https://www.blackmagicdesign.com/jp/support/family/capture-and-playback"},
+    {"key": "bmd:camera:Blackmagic Camera", "label": "Blackmagic Camera", "page": "https://www.blackmagicdesign.com/jp/support/family/professional-cameras"},
+    {"key": "bmd:blackmagic-cloud-store:Blackmagic Cloud Store", "label": "Blackmagic Cloud Store", "page": "https://www.blackmagicdesign.com/jp/support/family/blackmagic-cloud-store"},
+    {"key": "bmd:ultimatte:Ultimatte", "label": "Ultimatte", "page": "https://www.blackmagicdesign.com/jp/support/family/ultimatte"},
+    {"key": "bmd:audio-monitor:Blackmagic Audio Monitor", "label": "Blackmagic Audio Monitor", "page": "https://www.blackmagicdesign.com/jp/support/family/video-and-audio-monitoring"},
+    {"key": "os:macos", "label": "macOS", "page": "https://developer.apple.com/news/releases/"},
+    {"key": "os:ipados", "label": "iPadOS", "page": "https://developer.apple.com/news/releases/"},
+    {"key": "os:windows", "label": "Windows 11", "page": "https://learn.microsoft.com/ja-jp/windows/release-health/windows11-release-information"}
+  ],
+  "rules": [
+    {"maker": "Blackmagic Design", "pattern": "^ATEM Streaming Bridge", "source": "bmd:web-presenter:Blackmagic Streaming"},
+    {"maker": "Blackmagic Design", "pattern": "^ATEM ", "source": "bmd:atem:ATEM Switchers"},
+    {"maker": "Blackmagic Design", "pattern": "^HyperDeck", "source": "bmd:hyperdeck:HyperDeck"},
+    {"maker": "Blackmagic Design", "pattern": "Video Assist", "source": "bmd:videoassist:Blackmagic Video Assist"},
+    {"maker": "Blackmagic Design", "pattern": "Videohub", "source": "bmd:videohub:Blackmagic Videohub"},
+    {"maker": "Blackmagic Design", "pattern": "^MultiView", "source": "bmd:multiview:MultiView"},
+    {"maker": "Blackmagic Design", "pattern": "^Smart(View|Scope)", "source": "bmd:smartview:SmartView"},
+    {"maker": "Blackmagic Design", "pattern": "^(Mini Converter|Micro Converter|Battery Converter|Teranex Mini|Blackmagic 2110 IP)", "source": "bmd:converters:Blackmagic Converters"},
+    {"maker": "Blackmagic Design", "pattern": "^Teranex (AV|Express|2D|3D)", "source": "bmd:teranex:Teranex"},
+    {"maker": "Blackmagic Design", "pattern": "(Web Presenter|Streaming Encoder)", "source": "bmd:web-presenter:Blackmagic Streaming"},
+    {"maker": "Blackmagic Design", "pattern": "^(DeckLink|UltraStudio|Intensity|H\\.264 Pro Recorder)", "source": "bmd:desktop-video:Desktop Video"},
+    {"maker": "Blackmagic Design", "pattern": "(Studio Camera|Pocket Cinema|Cinema Camera|URSA|PYXIS|Production Camera)", "source": "bmd:camera:Blackmagic Camera"},
+    {"maker": "Blackmagic Design", "pattern": "Cloud (Store|Pod|Dock)", "source": "bmd:blackmagic-cloud-store:Blackmagic Cloud Store"},
+    {"maker": "Blackmagic Design", "pattern": "^Ultimatte 12", "source": "bmd:ultimatte:Ultimatte"},
+    {"maker": "Blackmagic Design", "pattern": "Audio Monitor", "source": "bmd:audio-monitor:Blackmagic Audio Monitor"}
+  ]
+}

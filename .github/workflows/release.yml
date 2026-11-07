@@ -1,0 +1,18 @@
+# リリース：main に入ったとき、package.json のバージョンがまだリリースされていなければ自動で作る
+name: リリース
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: まだ無いバージョンならリリースを作る
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          V=v$(node -p "require('./package.json').version")
+          if gh release view "$V" >/dev/null 2>&1; then echo "$V はリリース済み"; exit 0; fi
+          gh release create "$V" --title "FIRMWATCH $V" --generate-notes --target "$GITHUB_SHA"

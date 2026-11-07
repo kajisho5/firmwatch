@@ -1,0 +1,44 @@
+# 公開：main に入ったら Cloudflare に配置する
+# このアカウントにある別のシステム（sw-ars など）には触れない。作る・変えるのは Worker「firmwatch」と D1「firmwatch」だけ
+name: 公開
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency: { group: deploy, cancel-in-progress: false }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: npm }
+      - name: 準備ができているか
+        id: ready
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Cloudflare の鍵がまだ登録されていないので、公開しません（README の「公開のしかた」）"; echo "go=0" >> $GITHUB_OUTPUT
+          else echo "go=1" >> $GITHUB_OUTPUT; fi
+      - if: steps.ready.outputs.go == '1'
+        run: npm ci && npm test && npx vite build
+      - name: データベース（D1「firmwatch」）を用意
+        if: steps.ready.outputs.go == '1'
+        run: |
+          ID=$(npx wrangler d1 list --json | node -e "const l=JSON.parse(require('fs').readFileSync(0,'utf8'));const d=l.find(x=>x.name==='firmwatch');console.log(d?(d.uuid||d.id||d.database_id):'')")
+          if [ -z "$ID" ]; then
+            npx wrangler d1 create firmwatch
+            ID=$(npx wrangler d1 list --json | node -e "const l=JSON.parse(require('fs').readFileSync(0,'utf8'));const d=l.find(x=>x.name==='firmwatch');console.log(d.uuid||d.id||d.database_id)")
+          fi
+          sed -i "s/00000000-0000-0000-0000-000000000000/$ID/" wrangler.jsonc
+          npx wrangler d1 migrations apply firmwatch --remote
+      - name: 配置
+        if: steps.ready.outputs.go == '1'
+        run: |
+          npx wrangler deploy --var "VAPID_PUBLIC_KEY:${{ secrets.VAPID_PUBLIC_KEY }}"
+          printf '%s' "${{ secrets.FIRMWATCH_INTERNAL_TOKEN }}" | npx wrangler secret put INTERNAL_TOKEN

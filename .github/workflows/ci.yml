@@ -1,0 +1,22 @@
+# 試験：プッシュとプルリクエストのたびに、型・単体・通し・パスキー・通知の試験を流す
+name: 試験
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx vite build
+      - run: npx playwright install --with-deps chromium
+      - name: 通し・パスキー・通知の試験
+        run: ./scripts/e2e.sh

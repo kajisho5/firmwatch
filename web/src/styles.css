@@ -1,0 +1,46 @@
+@import "tailwindcss";
+@import "@fontsource/ibm-plex-sans-jp/400.css";
+@import "@fontsource/ibm-plex-sans-jp/500.css";
+@import "@fontsource/ibm-plex-sans-jp/600.css";
+@import "@fontsource/ibm-plex-sans-jp/700.css";
+
+/* 色と書体（docs/design.md 11章。アルミ筐体の地に黒い文字、タリーランプだけが光る） */
+@theme {
+  --color-case: #D5D9DD;
+  --color-panel: #F2F3F4;
+  --color-ink: #000000;
+  --color-sub: #4B525A;
+  --color-faint: #7C838B;
+  --color-rule: #C3C8CD;
+  --color-tally: #D70015;
+  --color-tally-soft: #FBE3E5;
+  --color-go: #00843D;
+  --font-sans: "IBM Plex Sans JP", "Hiragino Sans", "Noto Sans JP", sans-serif;
+}
+
+html, body { background: var(--color-case); color: var(--color-ink); }
+body { font-family: var(--font-sans); -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; font-feature-settings: "palt" 0; }
+#root { min-height: 100dvh; }
+
+/* キーボード操作のときだけ、はっきりした枠を出す */
+@layer base { :focus-visible { outline: 3px solid #000; outline-offset: 2px; } }
+
+@layer components {
+/* タリーランプ */
+.lamp { display: inline-block; flex: none; border-radius: 2px; border: 0.8px solid #00000033; position: relative; }
+.lamp::after { content: ""; position: absolute; left: 1.5px; right: 1.5px; top: 1.5px; height: min(3px, 25%); border-radius: 1px; background: #fff; opacity: .35; }
+.lamp-red { background: linear-gradient(#FF5A66, var(--color-tally) 45%, #A3000F); box-shadow: 0 0 7px 1px #d7001580; }
+.lamp-green { background: linear-gradient(#3DD27E, var(--color-go) 45%, #005E2B); }
+.lamp-off { background: linear-gradient(#C4C9CE, #9198A0); }
+.lamp-off::after { opacity: .25; }
+.lamp-quiet.lamp-red { box-shadow: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .lamp-blink { animation: lamp-in .6s ease-out 1; }
+  @keyframes lamp-in { from { filter: brightness(.4); } to { filter: none; } }
+}
+
+}
+
+.safe-top { padding-top: max(env(safe-area-inset-top), 12px); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }

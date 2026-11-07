@@ -189,12 +189,19 @@ app.post('/api/gear', async c => {
 });
 
 /** 専用の読み取りがない機種は、メーカーの製品ページを見張る（推定）。最初に誰かが登録したときに結びつける */
+// メーカーによっては、製品ページより「ダウンロード」のページのほうがファームウェアが載る
+const WATCH_URL: Record<string, (model: string) => string> = {
+  TOA: model => `https://www.toa-products.com/download/detail.php?h=${encodeURIComponent(model)}`,
+};
+
 async function watchModel(env: Env, modelId: number) {
-  const m = await env.DB.prepare('SELECT id, source_key, maker_url FROM models WHERE id = ?').bind(modelId).first<{ id: number; source_key: string | null; maker_url: string | null }>();
-  if (!m || m.source_key || !m.maker_url) return;
+  const m = await env.DB.prepare('SELECT id, maker, model, source_key, maker_url FROM models WHERE id = ?').bind(modelId).first<{ id: number; maker: string; model: string; source_key: string | null; maker_url: string | null }>();
+  if (!m || m.source_key) return;
+  const url = WATCH_URL[m.maker]?.(m.model) ?? m.maker_url;
+  if (!url) return;
   const key = `page:${m.id}`;
   await env.DB.batch([
-    env.DB.prepare("INSERT OR IGNORE INTO sources (key, label, page_url) VALUES (?, '製品ページ（推定）', ?)").bind(key, m.maker_url),
+    env.DB.prepare("INSERT OR IGNORE INTO sources (key, label, page_url) VALUES (?, '製品ページ（推定）', ?)").bind(key, url),
     env.DB.prepare('UPDATE models SET source_key = ? WHERE id = ? AND source_key IS NULL').bind(key, m.id),
   ]);
 }

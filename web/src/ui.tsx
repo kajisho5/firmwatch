@@ -9,14 +9,15 @@ export function Lamp({ state, w = 14, h = 14, quiet = false, className = '' }: {
 
 export const lampOf = (s: GearState): 'red' | 'green' | 'off' => (s === 'old' ? 'red' : s === 'ok' ? 'green' : 'off');
 
-export function stateText(g: { state: GearState; current_version: string | null; latest: { version: string } | null }) {
+export function stateText(g: { state: GearState; current_version: string | null; latest: { version: string } | null; source_error?: string | null; estimated?: boolean }) {
+  const est = g.estimated ? '（推定）' : '';
   switch (g.state) {
-    case 'old': return `最新は ${g.latest!.version}。手元は ${g.current_version}`;
-    case 'ok': return `最新の ${g.current_version}`;
-    case 'unset': return `最新は ${g.latest!.version}。今のバージョンが未入力です`;
+    case 'old': return `最新は ${g.latest!.version}${est}。手元は ${g.current_version}`;
+    case 'ok': return `最新の ${g.current_version}${est}`;
+    case 'unset': return `最新は ${g.latest!.version}${est}。今のバージョンが未入力です`;
     case 'manual': return g.current_version ? `${g.current_version}（自動では確認していません）` : '自動では確認していません';
-    case 'stopped': return '公開ページを読めず、確認が止まっています';
-    default: return 'まだ確認していません';
+    case 'stopped': return g.source_error ? `確認できません：${g.source_error}` : '公開ページを読めず、確認が止まっています';
+    default: return g.estimated ? '次の定期チェックで製品ページを確認します' : 'まだ確認していません';
   }
 }
 

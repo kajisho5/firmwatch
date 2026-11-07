@@ -25,6 +25,7 @@ export type GearState = 'old' | 'ok' | 'unset' | 'manual' | 'stopped' | 'unknown
 export interface Gear {
   id: string; model_id: number | null; maker: string; model: string; sub: string;
   source_key: string | null; source_label: string | null; page_url: string | null; checked_at: number | null;
+  source_error: string | null; estimated: boolean;
   asset_no: string | null; serial: string | null; purchased_on: string | null; purchased_from: string | null;
   current_version: string | null; last_updated_on: string | null; note: string | null; created_at: number;
   latest: { version: string; title: string; released_at: number | null; url: string } | null;

@@ -112,8 +112,8 @@ export function Settings({ onLogout }: { onLogout: () => void }) {
             <button className="min-h-[44px] text-[15px] font-semibold text-tally" onClick={async () => { await api('/api/auth/logout', { body: {} }).catch(() => {}); onLogout(); }}>ログアウト</button>
           </div>
           <div className="px-5 pt-8 text-[12px] leading-[1.7] text-faint">
-            <p>自動で確認しているメーカー：Blackmagic Design（そのほかは順次）。OS：macOS、iPadOS、Windows 11。</p>
-            <p>Roland はメーカーのサイトが機械での読み取りを認めていないため、自動では確認していません。</p>
+            <p>正確に確認しているメーカー：Blackmagic Design（そのほかは順次）。OS：macOS、iPadOS、Windows 11。</p>
+            <p>そのほかのメーカーは、製品ページに載っているバージョンを読み取って見張ります（推定）。メーカーのサイトが機械での読み取りを認めていない場合は確認しません。</p>
           </div>
         </>
       )}

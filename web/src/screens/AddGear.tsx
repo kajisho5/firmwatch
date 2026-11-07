@@ -4,7 +4,7 @@ import { api } from '../api';
 import { Screen, Back, SectionTitle, Button, ErrorNote, Field, inputCls } from '../ui';
 import { go } from '../router';
 
-interface Hit { id: number; maker: string; model: string; sub: string; discontinued: number; source_key: string | null; source_label: string | null }
+interface Hit { id: number; maker: string; model: string; sub: string; discontinued: number; source_key: string | null; source_label: string | null; maker_url?: string | null }
 
 export function AddGear() {
   const preset = new URLSearchParams(location.search).get('model');
@@ -19,7 +19,7 @@ export function AddGear() {
 
   useEffect(() => {
     if (!preset) return;
-    api(`/api/models/${preset}`).then(d => setPick({ id: d.model.id, maker: d.model.maker, model: d.model.model, sub: d.model.sub, discontinued: 0, source_key: d.model.source_key, source_label: d.model.source_label })).catch(() => {});
+    api(`/api/models/${preset}`).then(d => setPick({ id: d.model.id, maker: d.model.maker, model: d.model.model, sub: d.model.sub, discontinued: 0, source_key: d.model.source_key, source_label: d.model.source_label, maker_url: d.model.maker_url })).catch(() => {});
   }, [preset]);
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export function AddGear() {
                 {hs.map(h => (
                   <button key={h.id} onClick={() => { setPick(h); setErr(null); }} className="min-h-[59px] w-full bg-panel px-5 py-2.5 text-left active:bg-white">
                     <span className="block text-[16px] font-medium">{h.model}</span>
-                    <span className="block text-[12.5px] text-sub">{h.sub}{h.discontinued ? '、生産終了' : ''}{h.source_key ? '' : '、自動確認なし'}</span>
+                    <span className="block text-[12.5px] text-sub">{h.sub}{h.discontinued ? '、生産終了' : ''}{h.source_key?.startsWith('bmd:') || h.source_key?.startsWith('os:') ? '' : h.source_key || h.maker_url ? '、製品ページで確認（推定）' : '、自動確認なし'}</span>
                   </button>
                 ))}
               </div>
@@ -83,7 +83,7 @@ export function AddGear() {
               <span className="min-w-0 flex-1">
                 <span className="block text-[13px] text-sub">{pick.maker}</span>
                 <span className="block text-[17px] font-bold">{pick.model}</span>
-                <span className="block text-[12.5px] text-sub">{pick.source_key ? `${pick.source_label} の新しいバージョンを自動で確認します` : 'この機種は自動では確認しません。更新は手で記録できます'}</span>
+                <span className="block text-[12.5px] text-sub">{pick.source_key && !pick.source_key.startsWith('page:') ? `${pick.source_label} の新しいバージョンを自動で確認します` : pick.source_key || pick.maker_url ? 'メーカーの製品ページを見張り、載っているバージョンが変わったら知らせます（推定）' : 'この機種は自動では確認しません。更新は手で記録できます'}</span>
               </span>
               {!preset && <button className="min-h-[44px] pl-3 text-[15px] font-semibold" onClick={() => setPick(null)}>変える</button>}
             </div>

@@ -105,7 +105,7 @@ app.post('/api/push/unsubscribe', async c => {
 app.get('/api/models', async c => {
   const q = (c.req.query('q') || '').replace(/[\s\-_/.()（）%]/g, '').toLowerCase().slice(0, 60);
   if (q.length < 2) return c.json({ models: [] });
-  const rows = await c.env.DB.prepare(`SELECT m.id, m.maker, m.model, m.sub, m.discontinued, m.source_key, s.label AS source_label FROM models m LEFT JOIN sources s ON s.key = m.source_key
+  const rows = await c.env.DB.prepare(`SELECT m.id, m.maker, m.model, m.sub, m.discontinued, m.source_key, m.maker_url, s.label AS source_label FROM models m LEFT JOIN sources s ON s.key = m.source_key
     WHERE m.search LIKE ? ORDER BY (m.search LIKE ?) DESC, m.discontinued, (m.source_key IS NULL), m.maker, m.model LIMIT 40`).bind(`%${q}%`, `%${q}`).all();
   return c.json({ models: rows.results });
 });
@@ -130,7 +130,7 @@ function stateOf(u: any, latest: any) {
   return compareVersions(u.current_version, latest.version) < 0 ? 'old' : 'ok';
 }
 
-const GEAR_SQL = `SELECT g.*, m.maker, m.model, m.sub, m.source_key, m.control_sw, s.label AS source_label, s.ok AS source_ok, s.page_url, s.checked_at
+const GEAR_SQL = `SELECT g.*, m.maker, m.model, m.sub, m.source_key, m.control_sw, s.label AS source_label, s.ok AS source_ok, s.error AS source_error, s.page_url, s.checked_at
   FROM gear g LEFT JOIN models m ON m.id = g.model_id LEFT JOIN sources s ON s.key = m.source_key`;
 
 function shapeGear(u: any, latest: Map<string, any>) {
@@ -138,6 +138,7 @@ function shapeGear(u: any, latest: Map<string, any>) {
   return {
     id: u.id, model_id: u.model_id, maker: u.maker ?? u.custom_maker ?? '', model: u.model ?? u.custom_model ?? '', sub: u.sub ?? '',
     source_key: u.source_key, source_label: u.source_label, page_url: u.page_url, checked_at: u.checked_at,
+    source_error: u.source_ok === 0 ? u.source_error : null, estimated: !!u.source_key?.startsWith('page:'),
     asset_no: u.asset_no, serial: u.serial, purchased_on: u.purchased_on, purchased_from: u.purchased_from,
     current_version: u.current_version, last_updated_on: u.last_updated_on, note: u.note, created_at: u.created_at,
     latest: l ? { version: l.version, title: l.title, released_at: l.released_at, url: l.url } : null,
@@ -183,8 +184,20 @@ app.post('/api/gear', async c => {
       .bind(randomId(), id, f.current_version, f.purchased_on ?? new Date(t + 9 * 3600_000).toISOString().slice(0, 10), await nameOf(c), '登録時', t));
   }
   await c.env.DB.batch(stmts);
+  if (modelId != null) await watchModel(c.env, modelId);
   return c.json({ ids });
 });
+
+/** 専用の読み取りがない機種は、メーカーの製品ページを見張る（推定）。最初に誰かが登録したときに結びつける */
+async function watchModel(env: Env, modelId: number) {
+  const m = await env.DB.prepare('SELECT id, source_key, maker_url FROM models WHERE id = ?').bind(modelId).first<{ id: number; source_key: string | null; maker_url: string | null }>();
+  if (!m || m.source_key || !m.maker_url) return;
+  const key = `page:${m.id}`;
+  await env.DB.batch([
+    env.DB.prepare("INSERT OR IGNORE INTO sources (key, label, page_url) VALUES (?, '製品ページ（推定）', ?)").bind(key, m.maker_url),
+    env.DB.prepare('UPDATE models SET source_key = ? WHERE id = ? AND source_key IS NULL').bind(key, m.id),
+  ]);
+}
 
 async function nameOf(c: any) {
   const u = await c.env.DB.prepare('SELECT name FROM users WHERE id = ?').bind(c.get('userId')).first();
@@ -246,12 +259,12 @@ app.get('/api/updates', async c => {
 
 // 機種の詳細：公開されたバージョンと手持ちの台
 app.get('/api/models/:id', async c => {
-  const m = await c.env.DB.prepare('SELECT m.*, s.label AS source_label, s.page_url, s.ok AS source_ok, s.checked_at FROM models m LEFT JOIN sources s ON s.key = m.source_key WHERE m.id = ?').bind(Number(c.req.param('id'))).first<any>();
+  const m = await c.env.DB.prepare('SELECT m.*, s.label AS source_label, s.page_url, s.ok AS source_ok, s.error AS source_error, s.checked_at FROM models m LEFT JOIN sources s ON s.key = m.source_key WHERE m.id = ?').bind(Number(c.req.param('id'))).first<any>();
   if (!m) throw new HttpError(404, '機種が見つかりません。');
   const releases = m.source_key ? (await c.env.DB.prepare('SELECT version, title, released_at, notes, url, severity FROM releases WHERE source_key = ?').bind(m.source_key).all<any>()).results.sort((a, b) => compareVersions(b.version, a.version)) : [];
   const latest = await latestBySource(c.env);
   const units = (await c.env.DB.prepare(`${GEAR_SQL} WHERE g.user_id = ? AND g.model_id = ? ORDER BY g.asset_no`).bind(c.get('userId'), m.id).all<any>()).results.map(r => shapeGear(r, latest));
-  return c.json({ model: { id: m.id, maker: m.maker, model: m.model, sub: m.sub, maker_url: m.maker_url, source_key: m.source_key, source_label: m.source_label, page_url: m.page_url, source_ok: m.source_ok, checked_at: m.checked_at }, releases, units });
+  return c.json({ model: { id: m.id, maker: m.maker, model: m.model, sub: m.sub, maker_url: m.maker_url, source_key: m.source_key, source_label: m.source_label, page_url: m.page_url, source_ok: m.source_ok, source_error: m.source_ok === 0 ? m.source_error : null, checked_at: m.checked_at, estimated: !!m.source_key?.startsWith('page:') }, releases, units });
 });
 
 // ---- 更新の一覧（通知） ----
@@ -304,6 +317,12 @@ app.post('/internal/push-result', async c => {
   const b = await body(c);
   await pushResult(c.env, Array.isArray(b.gone) ? b.gone.map(String) : []);
   return c.json({ ok: true });
+});
+app.get('/internal/watchlist', async c => {
+  await internalAuth(c);
+  const rows = await c.env.DB.prepare(`SELECT s.key, s.page_url AS url, m.model, m.maker FROM sources s JOIN models m ON m.source_key = s.key
+    WHERE s.key LIKE 'page:%' AND EXISTS (SELECT 1 FROM gear g WHERE g.model_id = m.id) ORDER BY m.maker, m.model`).all();
+  return c.json({ watch: rows.results });
 });
 app.get('/internal/sources', async c => {
   await internalAuth(c);

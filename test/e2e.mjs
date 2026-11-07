@@ -46,8 +46,11 @@ assert.ok(hit && hit.source_key === 'bmd:atem:ATEM Switchers'); ok('機種を探
 const add = await a('/api/gear', { body: { model_id: hit.id, count: 2, current_version: '10.1.2', purchased_on: '2024-04-10' } });
 assert.equal(add.data.ids.length, 2); ok('2台まとめて追加');
 const roland = (await a('/api/models?q=V-160HD')).data.models.find(m => m.model === 'V-160HD');
-assert.ok(roland && roland.source_key === null); ok('Roland は自動確認なし');
+assert.ok(roland && roland.source_key === null && roland.maker_url); ok('Roland は専用の読み取りなし（製品ページあり）');
 await a('/api/gear', { body: { model_id: roland.id, asset_no: 'R-01', current_version: '3.5' } });
+const wl = await fetch(BASE + '/internal/watchlist', { headers: { Authorization: `Bearer ${TOKEN}` } }).then(r => r.json());
+const rw = wl.watch.find(w => w.key === `page:${roland.id}`);
+assert.ok(rw && rw.url === roland.maker_url); ok('登録すると製品ページの見張りに入る');
 const custom = await a('/api/gear', { body: { custom_maker: 'サンプル電機', custom_model: 'テスト機 100' } });
 assert.equal(custom.status, 200); ok('一覧にない機種を手で追加');
 assert.equal((await a('/api/gear', { body: { purchased_on: '2024/4/10', model_id: hit.id } })).status, 400); ok('日付の形が違えば断る');
@@ -67,7 +70,14 @@ let gear = (await a('/api/gear')).data.gear;
 const units = gear.filter(g => g.model_id === hit.id);
 assert.equal(units[0].latest.version, atem[1].version);
 assert.equal(units[0].state, 'old'); ok(`手元 10.1.2 は古い（最新 ${atem[1].version}）`);
-assert.equal(gear.find(g => g.model_id === roland.id).state, 'manual'); ok('自動確認なしの台は manual');
+assert.equal(gear.find(g => g.model_id === roland.id).state, 'unknown'); ok('製品ページの見張りは、確認前は「まだ」');
+await internal('/internal/ingest', { checked: [{ key: `page:${roland.id}`, ok: true, releases: [{ version: '3.60', title: 'V-160HD 3.60（製品ページの記載）', released_at: null, notes: '推定', url: roland.maker_url, severity: 'now' }] }] });
+let rg = (await a('/api/gear')).data.gear.find(g => g.model_id === roland.id);
+assert.equal(rg.state, 'old'); assert.ok(rg.estimated); ok('製品ページの記載（推定）で、古い台が分かる');
+await internal('/internal/ingest', { checked: [{ key: `page:${roland.id}`, ok: false, error: 'メーカーのサイトが機械からのアクセスを断っています' }] });
+rg = (await a('/api/gear')).data.gear.find(g => g.model_id === roland.id);
+assert.equal(rg.state, 'stopped'); assert.match(rg.source_error, /断っています/); ok('読めないときは理由を出す');
+assert.equal(gear.find(g => g.model_id == null).state, 'manual'); ok('手で入れた機種は manual');
 
 // 2回目：新しいバージョンが出た
 const second = await internal('/internal/ingest', { checked: [{ key: 'bmd:atem:ATEM Switchers', ok: true, releases: atem }] });

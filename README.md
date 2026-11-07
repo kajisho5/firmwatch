@@ -18,10 +18,12 @@
 | Blackmagic Design | 公式サポートの公開データ（`/api/support/jp/downloads.json`） | ATEM・HyperDeck・Video Assist・Videohub・コンバーター・カメラなど 214 機種 |
 | macOS・iPadOS | Apple Developer の Releases RSS | 正式版のみ（ベータ・RC は除く） |
 | Windows 11 | Microsoft のリリース情報ページ | 機能更新（25H2 など）のみ |
+| **そのほかのメーカー（推定）** | 登録された機種の、メーカーの製品ページ | 「ファームウェア Ver.○○」「System Program Ver.○○」のような記載を読み取る |
 
-- 各サイトの robots.txt（機械での読み取りのルール）を確認し、禁止されていない場所だけを読んでいます。
-- **Roland は自動で確認していません。** proav.roland.com の robots.txt が `/support/`（更新ページがある場所）を禁止しているためです。更新したときは手で記録できます。
-- そのほかのメーカーは、ルールを確認しながら1社ずつ足していきます。
+- 読む前に、そのサイトの robots.txt（機械での読み取りのルール）を毎回確かめ、禁止されていないページだけを読みます。同じサイトは間をあけて読みます。
+- 製品ページの読み取りは推定です。画面には「推定」と出します。ページにバージョンが載っていない機種や、機械からのアクセスを断っているサイト（ATEN、JVC、Barco の一部など）は確認できず、理由を画面に出します。
+- 2026-11-07 に主なメーカーの 45 機種で試したところ、13 機種（Yamaha、Sennheiser、AJA、Behringer、Roland、TASCAM、Datavideo）でバージョンを読み取れました。
+- Roland は更新ページ（/support/）が禁止されているため読みません。製品ページは禁止されておらず、「System Program Ver.○○」が載っているので、そこを読みます。
 
 機種のリスト（12,592機種）は、[HOLDLINE](https://github.com/kajisho5/holdline) の機材カタログから取り込んでいます（`tools/import_holdline_catalog.py` → `tools/build_seed.py`）。
 

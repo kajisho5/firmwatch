@@ -237,3 +237,10 @@ firmwatch/
 - **機種のリスト**：HOLDLINE のカタログのうち、ファームが「あり」「機種による」の 12,592 機種。自動確認できるのは Blackmagic の 214 機種
 - 試験：単体 9 件、通し 31 件、パスキー（Chrome の仮想認証器）6 件、通知（Chrome でサービスワーカーに届ける）3 件
 - **鍵を人に作らせない**：定期チェックの本人確認は GitHub Actions の証明（OIDC、宛先 `firmwatch`、`kajisho5/firmwatch` の main だけ）。通知用の鍵（VAPID）は Worker が初回に WebCrypto で作り、D1 の settings に保存して、画面（公開鍵）と定期チェック（両方）に渡す。人が入れるのは Cloudflare の API トークンとアカウント ID だけ
+
+## 13. 製品ページの見張り（推定）（2026-11-07）
+- 専用の読み取りがないメーカーは、機種が初めて登録されたときに `page:<機種ID>` の取得先を作り、HOLDLINE カタログの `maker_url`（製品ページ）を見張る。定期チェックは `/internal/watchlist` で一覧を受け取る（登録されている機種だけ）
+- 読む前に robots.txt を確かめる（User-agent: * の Allow/Disallow、* と $ に対応）。401/403 は「断っている」と扱う。同じサイトは 1.5 秒以上あける。Shift_JIS・EUC-JP のページは文字コードを見て読む
+- 読み取りの決まり（`checker/pagewatch.mjs`）：「ファームウェア」「Firmware」「System Program」「Software」の直後の番号は採る。「Ver」「version」だけの番号は、40 文字以内にファームを指す言葉があるときだけ採る。「以降」「より」が続く番号、対応OS・通信規格（Bluetooth・USB など）・ファイル形式（ID3 など）の番号は採らない
+- 実際のページで起きた誤り（Bluetooth 標準規格 Ver 4.2、ID3TAG Ver. 2.4、Shift_JIS の文字化け）は試験に入れてある
+- 結果：主なメーカー 45 機種のうち 13 機種で取得、誤りは確認した範囲でなし。取れなかった理由は、ページに記載なし（Shure、TOA、Audio-Technica、Allen & Heath、Kramer、Epson、Extron、Canon など）、機械からのアクセスを断っている（ATEN、JVC、Barco の一部）

@@ -9,9 +9,11 @@
 //   developer.apple.com の /news/releases/rss/ は禁止されていない
 //   learn.microsoft.com の release-health は禁止されていない
 //   Roland（proav.roland.com）は /support/ が禁止されているので読まない
+// 製品ページの見張り（pagewatch.mjs）は、読む前にそのサイトの robots.txt を毎回確かめる
 import { readFileSync } from 'node:fs';
 import * as webpush from 'web-push';
 import { parseBlackmagic, parseAppleRss, parseWindows } from './adapters.mjs';
+import { watchPages, decodeHtml } from './pagewatch.mjs';
 
 const UA = 'FIRMWATCH/0.1 (+https://github.com/kajisho5/firmwatch)';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -63,6 +65,18 @@ async function main() {
   const token = await authToken();
   const digestOnly = process.argv.includes('--digest');
   const checked = digestOnly ? [] : await collect();
+  if (!digestOnly) {
+    // 汎用の見張り：登録された機種のうち、専用の読み取りがないものの製品ページ
+    const wl = await fetch(`${base}/internal/watchlist`, { headers: { Authorization: `Bearer ${token}` } });
+    if (wl.ok) {
+      const { watch } = await wl.json();
+      console.log(`製品ページの見張り：${watch.length} 機種`);
+      checked.push(...await watchPages(watch, async url => {
+        const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'ja' }, redirect: 'follow', signal: AbortSignal.timeout(30_000) });
+        return { status: r.status, text: r.status === 200 ? decodeHtml(await r.arrayBuffer(), r.headers.get('content-type') || '') : '' };
+      }));
+    } else console.log(`見張りの一覧を受け取れませんでした（${wl.status}）`);
+  }
   for (const c of checked) console.log(c.ok ? `OK   ${c.key}  最新 ${c.releases[0].version}` : `失敗 ${c.key}  ${c.error}`);
 
   const res = await fetch(`${base}/internal/ingest`, {

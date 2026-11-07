@@ -5,7 +5,7 @@ import { Screen, Back, Lamp, SectionTitle, List, Chevron, Button, ErrorNote, fmt
 import { go } from '../router';
 
 interface Detail {
-  model: { id: number; maker: string; model: string; sub: string; maker_url: string | null; source_key: string | null; source_label: string | null; page_url: string | null; source_ok: number | null; checked_at: number | null };
+  model: { id: number; maker: string; model: string; sub: string; maker_url: string | null; source_key: string | null; source_label: string | null; page_url: string | null; source_ok: number | null; source_error: string | null; checked_at: number | null; estimated: boolean };
   releases: { version: string; title: string; released_at: number | null; notes: string; url: string; severity: string }[];
   units: Gear[];
 }
@@ -28,14 +28,14 @@ export function ModelDetail({ id }: { id: string }) {
           <div className="mt-4 bg-panel px-5 py-4">
             {latest ? (
               <>
-                <p className="text-[13px] text-sub">公開されている最新{d.model.source_label ? `（${d.model.source_label}）` : ''}</p>
+                <p className="text-[13px] text-sub">{d.model.estimated ? 'メーカーの製品ページに載っているバージョン（推定）' : `公開されている最新${d.model.source_label ? `（${d.model.source_label}）` : ''}`}</p>
                 <p className="mt-1 flex items-baseline gap-4"><span className="text-[32px] font-bold leading-none">{latest.version}</span>
                   {latest.released_at && <span className="text-[14px] text-sub">{fmtDate(latest.released_at)}に公開</span>}</p>
               </>
             ) : d.model.source_key ? (
-              <p className="text-[14px] text-sub">{d.model.source_ok === 0 ? 'メーカーの公開ページを読めず、確認が止まっています。' : 'まだ確認していません。次の定期チェック（6時間ごと）で分かります。'}</p>
+              <p className="text-[14px] leading-[1.6] text-sub">{d.model.source_ok === 0 ? `確認できません：${d.model.source_error ?? 'メーカーの公開ページを読めませんでした'}。更新したときは、各台の画面から記録できます。` : d.model.estimated ? 'メーカーの製品ページを見張っています。次の定期チェック（6時間ごと）で、ページに載っているバージョンを読み取ります。' : 'まだ確認していません。次の定期チェック（6時間ごと）で分かります。'}</p>
             ) : (
-              <p className="text-[14px] leading-[1.6] text-sub">この機種は自動では確認していません。メーカーが機械での読み取りを認めていないか、まだ対応していないためです。更新したときは、各台の画面から記録できます。</p>
+              <p className="text-[14px] leading-[1.6] text-sub">この機種は自動では確認していません。メーカーのページが分からないためです。更新したときは、各台の画面から記録できます。</p>
             )}
           </div>
           {(d.model.page_url || d.model.maker_url) && (

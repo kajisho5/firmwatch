@@ -19,13 +19,16 @@ async function waitBuild(v, ms = 40000) {
   }
   throw new Error(`版が ${v} に切り替わりませんでした（今は ${await build().catch(() => '?')}）`);
 }
-const served = async () => { try { return (await (await fetch(BASE + '/version.json', { cache: 'no-store' })).json()).build; } catch { return null; } };
+// 公開中の版。Node の fetch は環境によって localhost を ::1 に向けて届かないことがあるので、ブラウザ側の通信で読む
+const served = async () => { try { return (await (await page.context().request.get(BASE + '/version.json', { headers: { 'cache-control': 'no-store' } })).json()).build; } catch { return null; } };
 const rebuild = async () => {
   const before = await served();
   execSync('npx vite build', { stdio: 'ignore' });
   for (let i = 0; i < 60; i++) { const v = await served(); if (v && v !== before) break; await new Promise(r => setTimeout(r, 500)); }
   await new Promise(r => setTimeout(r, 1500)); // 画面のファイルがそろうのを待つ
-  return served();
+  const v = await served();
+  if (!v || v === before) throw new Error(`新しい版が公開されませんでした（前 ${before} / 今 ${v}）`);
+  return v;
 };
 
 await page.goto(BASE + '/');

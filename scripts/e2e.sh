@@ -13,7 +13,21 @@ npx wrangler dev --port "$PORT" --ip 127.0.0.1 --persist-to "$STATE" --env-file 
 PID=$!
 trap 'pkill -P $PID 2>/dev/null; kill $PID 2>/dev/null; pkill -f "port $PORT" 2>/dev/null; cp "$STATE/wrangler.log" /tmp/e2e-wrangler.log 2>/dev/null; rm -rf "$STATE"' EXIT
 for _ in $(seq 1 60); do curl -sf "http://127.0.0.1:$PORT/api/push/vapid" >/dev/null && break; sleep 1; done
-INTERNAL_TOKEN="$TOKEN" node test/e2e.mjs "http://127.0.0.1:$PORT"
-node test/passkey.mjs "http://localhost:$PORT"
-node test/push.mjs "http://localhost:$PORT"
-node test/update.mjs "http://localhost:$PORT"
+# 試験を順に流す。失敗したら最後の出力を GitHub の注記（::error::）にも出す（記録を読めない環境でも原因が分かるように）
+run() {
+  local name="$1"; shift
+  local out; out=$(mktemp)
+  if ! "$@" > "$out" 2>&1; then
+    cat "$out"
+    if [ -n "${GITHUB_ACTIONS:-}" ]; then
+      msg=$(tail -n 15 "$out" | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"} {print}')
+      echo "::error title=${name}::${msg}"
+    fi
+    return 1
+  fi
+  cat "$out"
+}
+run 通しの試験 env INTERNAL_TOKEN="$TOKEN" node test/e2e.mjs "http://127.0.0.1:$PORT"
+run パスキーの試験 node test/passkey.mjs "http://localhost:$PORT"
+run 通知の試験 node test/push.mjs "http://localhost:$PORT"
+run 版の切り替えの試験 node test/update.mjs "http://localhost:$PORT"

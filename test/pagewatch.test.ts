@@ -75,3 +75,28 @@ describe('見張りの流れ', () => {
     expect(r[3].error).toContain('見つかりません');
   });
 });
+
+import { parseShureArchive, shureReleases } from '../checker/shure.mjs';
+import { readFileSync } from 'node:fs';
+describe('Shure の一覧', () => {
+  const rows = parseShureArchive(readFileSync(new URL('./fixtures/shure-archive.txt', import.meta.url), 'utf8'));
+  it('行を取り出せる', () => {
+    expect(rows.length).toBeGreaterThan(150);
+    expect(rows.every(r => /^\d+(\.\d+)+/.test(r.version))).toBe(true);
+  });
+  it('型番ごとに最新のファームウェアが分かる（完全一致だけ）', () => {
+    const m = shureReleases(rows);
+    expect(m['shure:MXW2XSM58']?.[0].version).toBeTruthy();
+    expect(m['shure:MXWNDX']?.[0].version).toMatch(/^\d/);
+    expect(m['shure:AD2']?.[0].version).toMatch(/^\d/); // 名前の後ろに並ぶ型番
+    // アプリ・ソフトは入れない
+    expect(m['shure:SHUREDISCOVERY']).toBeUndefined(); // ソフト（Shure Discovery）は入れない
+  });
+});
+describe('Shure の型番', () => {
+  it('「+」付きは別の型番', () => {
+    const m = shureReleases([{ type: 'FIRMWARE', title: 'GLXD4+', version: '2.0.18', date: 1, products: 'GLXD4+' }]);
+    expect(m['shure:GLXD4PLUS']).toBeTruthy();
+    expect(m['shure:GLXD4']).toBeUndefined();
+  });
+});

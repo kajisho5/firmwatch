@@ -14,6 +14,7 @@ import { readFileSync } from 'node:fs';
 import * as webpush from 'web-push';
 import { parseBlackmagic, parseAppleRss, parseWindows } from './adapters.mjs';
 import { watchPages, decodeHtml } from './pagewatch.mjs';
+import { fetchShureArchive, parseShureArchive, shureReleases } from './shure.mjs';
 
 const UA = 'FIRMWATCH/0.1 (+https://github.com/kajisho5/firmwatch)';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -66,6 +67,24 @@ async function main() {
   const digestOnly = process.argv.includes('--digest');
   const checked = digestOnly ? [] : await collect();
   if (!digestOnly) {
+    // Shure：公式の一覧をブラウザで表示して読む
+    const srcRes = await fetch(`${base}/internal/sources`, { headers: { Authorization: `Bearer ${token}` } });
+    const shureKeys = srcRes.ok ? (await srcRes.json()).map(s => s.key).filter(k => k.startsWith('shure:')) : [];
+    if (shureKeys.length) {
+      try {
+        const map = shureReleases(parseShureArchive(await fetchShureArchive()));
+        if (!Object.keys(map).length) throw new Error('一覧を読み取れませんでした（ページの作りが変わった可能性）');
+        let found = 0;
+        for (const k of shureKeys) {
+          if (map[k]?.length) { checked.push({ key: k, ok: true, releases: map[k] }); found++; }
+          else checked.push({ key: k, ok: false, error: 'Shure の一覧に、この機種のファームウェアが見つかりません' });
+        }
+        console.log(`Shure：${shureKeys.length} 機種のうち ${found} 機種のファームウェアを確認`);
+      } catch (e) {
+        console.log(`Shure の一覧を読めませんでした：${e.message}`);
+        for (const k of shureKeys) checked.push({ key: k, ok: false, error: `Shure の一覧を読めませんでした（${String(e.message).slice(0, 80)}）` });
+      }
+    }
     // 汎用の見張り：登録された機種のうち、専用の読み取りがないものの製品ページ
     const wl = await fetch(`${base}/internal/watchlist`, { headers: { Authorization: `Bearer ${token}` } });
     if (wl.ok) {

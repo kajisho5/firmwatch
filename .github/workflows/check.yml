@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - run: npm ci
+      - name: ブラウザを用意（Shure の一覧を表示して読むため）
+        run: test -x /usr/bin/google-chrome || npx playwright install --with-deps chromium
       - name: 公開先の URL を調べる
         id: url
         env:

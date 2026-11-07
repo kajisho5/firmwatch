@@ -11,7 +11,8 @@ cleanupOutdatedCaches();
 registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html'), { denylist: [/^\/api\//, /^\/internal\//] }));
 registerRoute(({ request }) => request.destination === 'font', new CacheFirst({ cacheName: 'fonts' }));
 
-self.addEventListener('install', () => self.skipWaiting());
+// 新しい版は、画面から合図（入力中でないとき・ボタンを押したとき）を受けてから入れ替わる
+self.addEventListener('message', e => { if (e.data?.type === 'SKIP_WAITING') self.skipWaiting(); });
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 
 self.addEventListener('push', e => {

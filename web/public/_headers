@@ -1,0 +1,11 @@
+# 画面の入口・サービスワーカー・版の番号は、端末やネットワークに古いまま保存させない
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+/version.json
+  Cache-Control: no-store
+/manifest.webmanifest
+  Cache-Control: no-cache

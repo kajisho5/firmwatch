@@ -16,3 +16,4 @@ for _ in $(seq 1 60); do curl -sf "http://127.0.0.1:$PORT/api/push/vapid" >/dev/
 INTERNAL_TOKEN="$TOKEN" node test/e2e.mjs "http://127.0.0.1:$PORT"
 node test/passkey.mjs "http://localhost:$PORT"
 node test/push.mjs "http://localhost:$PORT"
+node test/update.mjs "http://localhost:$PORT"

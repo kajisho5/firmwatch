@@ -1,4 +1,5 @@
 // ソーシャルプレビュー画像を作る（リンクを貼ったときに出る画像）
+// 機種名・バージョンは載せない（実在しないバージョンを実在の機種に付けないため）
 // web/public/og.png（1200×630、サイト用）と docs/social-preview.png（1280×640、GitHub のリポ用）
 // 使い方：node tools/make_og.mjs
 import { chromium } from 'playwright';
@@ -33,9 +34,9 @@ body{width:${w}px;height:${h}px;background:#D5D9DD;font-family:'IBM Plex Sans JP
 <div class="l"><img src="${logo}" alt=""><p>機材のファームウェアに<br>新しいバージョンが出たら知らせる。</p>
 <small>持っている機材を1台ずつ登録。<br>iPhone・Android に通知が届きます。</small></div>
 <div class="r">
-<div class="row"><span class="lamp red"></span><div class="t">ATEM Mini Pro</div><div class="v">10.1.2 → <b>10.2</b></div></div>
-<div class="row"><span class="lamp red"></span><div class="t">V-160HD</div><div class="v">4.1.0 → <b>4.2.0</b></div></div>
-<div class="row dim"><span class="lamp green"></span><div class="t">HyperDeck Studio HD Mini</div><div class="v">最新の <b>9.0</b></div></div>
+<div class="row"><span class="lamp red"></span><div class="t">スイッチャー</div><div class="v">新しいバージョンが出ました</div></div>
+<div class="row"><span class="lamp red"></span><div class="t">ワイヤレスマイク</div><div class="v">新しいバージョンが出ました</div></div>
+<div class="row dim"><span class="lamp green"></span><div class="t">レコーダー</div><div class="v">最新のバージョンです</div></div>
 </div></body></html>`;
 
 const b = await chromium.launch();

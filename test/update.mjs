@@ -79,32 +79,42 @@ await page.waitForFunction(() => !!navigator.serviceWorker.controller);
 const v1 = await build();
 console.log('  ✓ 古いバージョンを開いた', v1);
 
-// 入力していないとき：前に出したら自動で切り替わる
+// 開いたとき・戻ったとき（入力していない）：そのまま切り替わり、「更新しました」を出す（T2）
 const v2 = await rebuild();
 assert.notEqual(v2, v1);
 await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
 await waitBuild(v2);
-console.log('  ✓ 入力していないときは自動で新しいバージョンに切り替わる', v2);
+await page.waitForSelector('text=に更新しました', { timeout: 10000 });
+console.log('  ✓ 戻ったときは自動で新しいバージョンに切り替わり「更新しました」を出す', v2);
+await page.waitForSelector('text=に更新しました', { state: 'detached', timeout: 10000 });
+console.log('  ✓ 「更新しました」は少したつと消える');
 
-// 入力の途中：勝手に読み込み直さず、案内を出す
+// 使っている途中に見つかった：読み込み直さず「新しいバージョンがあります」を出す（T1）。✕ で閉じても、次に戻ったとき切り替わる
+await page.evaluate(() => window.__FW_IN_USE__());
+const v3 = await rebuild();
+await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+await page.waitForSelector('text=新しいバージョンがあります', { timeout: 60000 });
+assert.equal(await build(), v2);
+console.log('  ✓ 使っている途中は読み込み直さず「新しいバージョンがあります」を出す');
+await page.click('[aria-label="閉じる"]');
+await page.waitForSelector('text=新しいバージョンがあります', { state: 'detached' });
+await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+await waitBuild(v3);
+console.log('  ✓ 閉じても、次に戻ったときに切り替わる', v3);
+
+// 入力の途中：戻ったときでも勝手に読み込み直さず、知らせを出す
 await page.waitForLoadState('networkidle');
 await page.click('text=新しく始める');
 await page.fill('input[autocomplete="nickname"]', 'テスト中');
-const v3 = await rebuild();
+const v4 = await rebuild();
 await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
-await page.waitForSelector('text=新しいバージョンがあります', { timeout: 60000 }).catch(async e => {
-  const manual = await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); r?.waiting?.postMessage({ type: 'SKIP_WAITING' }); await new Promise(x => setTimeout(x, 3000)); return { stillWaiting: !!r?.waiting }; }).catch(e => 'nav:' + e.message.slice(0, 40));
-  logs.push('手で合図→' + JSON.stringify(manual) + ' SW ' + JSON.stringify(swv) + ' 通信中 ' + [...inflight.values()].join(','));
-  const st = await page.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); return { build: window.__FW_BUILD__, waiting: !!r?.waiting, installing: !!r?.installing, focus: document.activeElement?.tagName, url: location.href }; });
-  console.log('状態', JSON.stringify(st), '公開', await served());
-  throw e;
-});
-assert.equal(await build(), v2);
+await page.waitForSelector('text=新しいバージョンがあります', { timeout: 60000 });
+assert.equal(await build(), v3);
 assert.equal(await page.inputValue('input[autocomplete="nickname"]'), 'テスト中');
-console.log('  ✓ 入力中は読み込み直さず「新しいバージョンがあります」と出す（入力は残る）');
+console.log('  ✓ 入力中は読み込み直さず知らせを出す（入力は残る）');
 await page.click('text=更新する');
-await waitBuild(v3);
-console.log('  ✓ 「更新する」で新しいバージョンに切り替わる', v3);
+await waitBuild(v4);
+console.log('  ✓ 「更新する」で新しいバージョンに切り替わる', v4);
 
 // 電波がないときは、保存してある画面で開ける
 await page.context().setOffline(true);

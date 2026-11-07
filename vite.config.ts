@@ -21,7 +21,7 @@ export default defineConfig({
       filename: 'sw.ts',
       registerType: 'prompt',
       injectRegister: false,
-      injectManifest: { globPatterns: ['**/*.{js,css,html,png,svg}'], maximumFileSizeToCacheInBytes: 3 * 1024 * 1024 },
+      injectManifest: { globPatterns: ['**/*.{js,css,html,png,svg}'], globIgnores: ['og.png'], maximumFileSizeToCacheInBytes: 3 * 1024 * 1024 },
       manifest: {
         name: 'FIRMWATCH',
         short_name: 'FIRMWATCH',

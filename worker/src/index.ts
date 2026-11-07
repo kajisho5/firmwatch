@@ -102,12 +102,56 @@ app.post('/api/push/unsubscribe', async c => {
 });
 
 // ---- 機種の検索 ----
+// q：名前で探す。cat / sub / maker：ジャンル・種類・メーカーで絞る（絞ったときは q が無くても一覧を返す）
 app.get('/api/models', async c => {
   const q = (c.req.query('q') || '').replace(/[\s\-_/.()（）%]/g, '').toLowerCase().slice(0, 60);
-  if (q.length < 2) return c.json({ models: [] });
+  const cat = (c.req.query('cat') || '').slice(0, 40), sub = (c.req.query('sub') || '').slice(0, 60), maker = (c.req.query('maker') || '').slice(0, 80);
+  const scoped = !!(sub || maker);
+  if (q.length < 2 && !scoped) return c.json({ models: [] });
+  const where: string[] = [], args: unknown[] = [];
+  if (q.length >= 2) { where.push('m.search LIKE ?'); args.push(`%${q}%`); }
+  if (cat) { where.push('m.category = ?'); args.push(cat); }
+  if (sub) { where.push('m.sub = ?'); args.push(sub); }
+  if (maker) { where.push('m.maker = ?'); args.push(maker); }
+  const order = q.length >= 2 && !scoped ? 'ORDER BY (m.search LIKE ?) DESC, m.discontinued, (m.source_key IS NULL), m.maker, m.model' : 'ORDER BY m.maker, m.discontinued, m.model';
+  if (q.length >= 2 && !scoped) args.push(`%${q}`);
   const rows = await c.env.DB.prepare(`SELECT m.id, m.maker, m.model, m.sub, m.discontinued, m.source_key, m.maker_url, s.label AS source_label FROM models m LEFT JOIN sources s ON s.key = m.source_key
-    WHERE m.search LIKE ? ORDER BY (m.search LIKE ?) DESC, m.discontinued, (m.source_key IS NULL), m.maker, m.model LIMIT 40`).bind(`%${q}%`, `%${q}`).all();
+    WHERE ${where.join(' AND ')} ${order} LIMIT ${scoped ? 2000 : 40}`).bind(...args).all();
   return c.json({ models: rows.results });
+});
+
+// ジャンル・種類・メーカーの一覧（機種の数つき）
+app.get('/api/browse', async c => {
+  const by = c.req.query('by') || 'genre', cat = c.req.query('cat') || '', sub = c.req.query('sub') || '', maker = c.req.query('maker') || '';
+  const db = c.env.DB;
+  if (sub) { // 種類の中のメーカー
+    const r = await db.prepare('SELECT maker AS name, COUNT(*) AS n FROM models WHERE sub = ? AND (? = \'\' OR category = ?) GROUP BY maker ORDER BY n DESC, maker').bind(sub, cat, cat).all();
+    return c.json({ items: r.results });
+  }
+  if (maker) { // メーカーの中の種類
+    const r = await db.prepare('SELECT sub AS name, category, COUNT(*) AS n FROM models WHERE maker = ? GROUP BY category, sub ORDER BY n DESC, sub').bind(maker).all();
+    return c.json({ items: r.results });
+  }
+  if (cat) { // ジャンルの中の種類
+    const r = await db.prepare('SELECT sub AS name, COUNT(*) AS n FROM models WHERE category = ? GROUP BY sub ORDER BY n DESC, sub').bind(cat).all();
+    return c.json({ items: r.results });
+  }
+  if (by === 'maker') {
+    const r = (await db.prepare('SELECT maker AS name, COUNT(*) AS n FROM models GROUP BY maker').all<{ name: string; n: number }>()).results;
+    const ascii = (s: string) => /^[\x00-\x7F]/.test(s);
+    const ja = new Intl.Collator('ja');
+    r.sort((a, b) => ascii(a.name) !== ascii(b.name) ? (ascii(a.name) ? -1 : 1) : ascii(a.name) ? a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }) : ja.compare(a.name, b.name));
+    const owned = (await db.prepare('SELECT DISTINCT m.maker AS name FROM gear g JOIN models m ON m.id = g.model_id WHERE g.user_id = ?').bind(c.get('userId')).all<{ name: string }>()).results.map(x => x.name);
+    return c.json({ items: r, owned });
+  }
+  const rows = (await db.prepare('SELECT category, sub, COUNT(*) AS n FROM models GROUP BY category, sub ORDER BY n DESC').all<{ category: string; sub: string; n: number }>()).results;
+  const g = new Map<string, { name: string; n: number; examples: string[] }>();
+  for (const x of rows) {
+    const e = g.get(x.category) ?? { name: x.category, n: 0, examples: [] };
+    e.n += x.n; if (e.examples.length < 3) e.examples.push(x.sub);
+    g.set(x.category, e);
+  }
+  return c.json({ items: [...g.values()].sort((a, b) => b.n - a.n) });
 });
 
 // 最新バージョン（取得先ごと）

@@ -48,6 +48,23 @@ assert.equal(add.data.ids.length, 2); ok('2台まとめて追加');
 const roland = (await a('/api/models?q=V-160HD')).data.models.find(m => m.model === 'V-160HD');
 assert.ok(roland && roland.source_key === null && roland.maker_url); ok('Roland は専用の読み取りなし（製品ページあり）');
 await a('/api/gear', { body: { model_id: roland.id, asset_no: 'R-01', current_version: '3.5' } });
+
+// ジャンル・メーカーからたどる
+const genres = (await a('/api/browse')).data.items;
+assert.equal(genres[0].name, '映像'); assert.ok(genres.length >= 7 && genres[0].examples.length === 3); ok('ジャンルの一覧（機種の多い順・種類の例つき）');
+const subs = (await a('/api/browse?cat=' + encodeURIComponent('映像'))).data.items;
+assert.ok(subs.some(x => x.name === 'スイッチャー' && x.n > 100)); ok('ジャンルの中の種類');
+const sw = (await a('/api/models?cat=' + encodeURIComponent('映像') + '&sub=' + encodeURIComponent('スイッチャー'))).data.models;
+assert.ok(sw.length > 100 && sw.every(m => m.sub === 'スイッチャー') && sw.some(m => m.model === 'V-160HD')); ok('種類の中の機種（検索語なしで一覧）');
+const swMakers = (await a('/api/browse?cat=' + encodeURIComponent('映像') + '&sub=' + encodeURIComponent('スイッチャー'))).data.items;
+assert.equal(swMakers.reduce((t, x) => t + x.n, 0), sw.length); ok('メーカーで絞る丸ボタンの数が一覧と合う');
+const mk = (await a('/api/browse?by=maker')).data;
+const iJa = mk.items.findIndex(x => !/^[\x00-\x7F]/.test(x.name));
+assert.ok(iJa > 0 && mk.items.slice(iJa).every(x => !/^[\x00-\x7F]/.test(x.name))); ok('メーカーの一覧（英字のあとに日本語）');
+assert.ok(mk.owned.includes('Blackmagic Design')); ok('持っている機材のメーカーが先頭に出る');
+const rsubs = (await a('/api/browse?maker=Roland')).data.items;
+const rmodels = (await a('/api/models?maker=Roland')).data.models;
+assert.ok(rmodels.every(m => m.maker === 'Roland') && rsubs.reduce((t, x) => t + x.n, 0) === rmodels.length); ok('メーカーの中の機種と種類');
 const wl = await fetch(BASE + '/internal/watchlist', { headers: { Authorization: `Bearer ${TOKEN}` } }).then(r => r.json());
 const rw = wl.watch.find(w => w.key === `page:${roland.id}`);
 assert.ok(rw && rw.url === roland.maker_url); ok('登録すると製品ページの見張りに入る');

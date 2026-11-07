@@ -2,12 +2,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
 import { Screen, Back, SectionTitle, Button, ErrorNote, Field, inputCls } from '../ui';
-import { go } from '../router';
+import { go, useLocation } from '../router';
+import { Browse, ModelRow, type Hit } from './Browse';
 
-interface Hit { id: number; maker: string; model: string; sub: string; discontinued: number; source_key: string | null; source_label: string | null; maker_url?: string | null }
 
 export function AddGear() {
-  const preset = new URLSearchParams(location.search).get('model');
+  const loc = useLocation();
+  const sp = new URLSearchParams(loc.split('?')[1] ?? '');
+  const preset = sp.get('model');
+  const deep = !!(sp.get('cat') || sp.get('maker'));
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<Hit[]>([]);
   const [pick, setPick] = useState<Hit | null>(null);
@@ -24,11 +27,11 @@ export function AddGear() {
 
   useEffect(() => {
     clearTimeout(timer.current);
-    if (q.trim().length < 2) { setHits([]); return; }
+    if (q.trim().length < 2 || deep) { setHits([]); return; }
     timer.current = window.setTimeout(() => {
       api<{ models: Hit[] }>(`/api/models?q=${encodeURIComponent(q)}`).then(r => setHits(r.models)).catch(e => setErr(e.message));
     }, 200);
-  }, [q]);
+  }, [q, deep]);
 
   const set = (k: string) => (e: { target: { value: string } }) => setF(x => ({ ...x, [k]: e.target.value }));
   const add = async () => {
@@ -47,34 +50,42 @@ export function AddGear() {
 
   return (
     <Screen>
-      <Back label="機材" to="/gear" />
-      <h1 className="px-5 pt-2 text-[28px] font-bold">機材を追加</h1>
+      {(!deep || pick || manual) && (
+        <>
+          {deep && pick
+            ? <button onClick={() => setPick(null)} className="flex min-h-[44px] items-center gap-2 px-4 text-[16px] font-medium"><svg width="12" height="18" viewBox="0 0 12 18" aria-hidden><path d="M9 1 1 9l8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>一覧に戻る</button>
+            : <Back label="機材" to="/gear" />}
+          <h1 className="px-5 pt-2 text-[28px] font-bold">機材を追加</h1>
+        </>
+      )}
 
-      {!manual && !pick && (
+      {!manual && !pick && (deep
+        ? <Browse params={sp} onPick={h => { setPick(h); setErr(null); window.scrollTo(0, 0); }} />
+        : (
         <>
           <div className="px-5 pt-4">
             <label className="flex h-[48px] items-center gap-3 rounded-[6px] border-[1.5px] border-ink bg-white px-4 focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-ink">
               <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden><circle cx="7.5" cy="7.5" r="6" fill="none" stroke="currentColor" strokeWidth="1.8" /><path d="m12 12 5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
-              <input className="h-full min-w-0 flex-1 bg-transparent text-[16px] focus:outline-none focus-visible:outline-none" placeholder="機種名やメーカーで探す（例：ATEM Mini）" value={q} onChange={e => setQ(e.target.value)} autoFocus aria-label="機種を探す" />
+              <input className="h-full min-w-0 flex-1 bg-transparent text-[16px] focus:outline-none focus-visible:outline-none" placeholder="機種名やメーカーで探す" value={q} onChange={e => setQ(e.target.value)} aria-label="機種を探す" />
             </label>
-            <p className="pt-3 text-[13px] text-sub">12,592機種から探せます。無ければ<button className="font-semibold text-ink underline underline-offset-4" onClick={() => setManual(true)}>手で入力</button>できます。</p>
           </div>
-          {q.trim().length >= 2 && hits.length === 0 && <p className="px-5 pt-6 text-[14px] text-sub">見つかりませんでした。型番の一部だけで探すか、手で入力してください。</p>}
-          {[...groups.entries()].map(([maker, hs]) => (
-            <section key={maker}>
-              <SectionTitle>{maker}</SectionTitle>
-              <div className="flex flex-col gap-px">
-                {hs.map(h => (
-                  <button key={h.id} onClick={() => { setPick(h); setErr(null); }} className="min-h-[59px] w-full bg-panel px-5 py-2.5 text-left active:bg-white">
-                    <span className="block text-[16px] font-medium">{h.model}</span>
-                    <span className="block text-[12.5px] text-sub">{h.sub}{h.discontinued ? '、生産終了' : ''}{h.source_key?.startsWith('bmd:') || h.source_key?.startsWith('os:') ? '' : h.source_key || h.maker_url ? '、製品ページで確認（推定）' : '、自動確認なし'}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-          ))}
+          {q.trim().length >= 2 ? (
+            <>
+              {hits.length === 0 && <p className="px-5 pt-6 text-[14px] text-sub">見つかりませんでした。型番の一部だけで探すか、<button className="font-semibold text-ink underline underline-offset-4" onClick={() => setManual(true)}>手で入力</button>してください。</p>}
+              {[...groups.entries()].map(([maker, hs]) => (
+                <section key={maker}>
+                  <SectionTitle>{maker}</SectionTitle>
+                  <div className="flex flex-col gap-px">
+                    {hs.map(h => <ModelRow key={h.id} h={h} onPick={() => { setPick(h); setErr(null); }} />)}
+                  </div>
+                </section>
+              ))}
+            </>
+          ) : (
+            <Browse params={sp} onPick={() => {}} onManual={() => setManual(true)} />
+          )}
         </>
-      )}
+      ))}
 
       {(pick || manual) && (
         <>

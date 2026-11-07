@@ -61,6 +61,8 @@ await page.waitForSelector('text=日本語のメーカー', { state: 'attached' 
 await shot('b4-makers');
 const before = await page.evaluate(() => scrollY);
 const bar = page.locator('main div.fixed');
+await bar.waitFor({ state: 'visible' });
+await page.waitForTimeout(300); // 並び終わるのを待つ
 const box = await bar.boundingBox();
 await page.mouse.click(box.x + box.width / 2, box.y + box.height - 5); // 索引のいちばん下（日本語）
 await page.waitForFunction(b => scrollY > b + 1000, before);

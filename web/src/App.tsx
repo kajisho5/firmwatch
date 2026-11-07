@@ -18,7 +18,7 @@ function UpdateBanner() {
   if (!on) return null;
   return (
     <div role="status" className="safe-top fixed inset-x-0 top-0 z-20 mx-auto flex max-w-[560px] items-center gap-3 bg-ink px-5 pb-3 text-white">
-      <span className="flex-1 text-[14px]">新しい版があります</span>
+      <span className="flex-1 text-[14px]">新しいバージョンがあります</span>
       <button onClick={applyUpdate} className="min-h-[40px] rounded-[6px] bg-white px-4 text-[14px] font-semibold text-ink">更新する</button>
     </div>
   );

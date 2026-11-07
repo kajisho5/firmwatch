@@ -16,7 +16,7 @@
 | 取得先 | 方法 | 対象 |
 |---|---|---|
 | Blackmagic Design | 公式サポートの公開データ（`/api/support/jp/downloads.json`） | ATEM・HyperDeck・Video Assist・Videohub・コンバーター・カメラなど 214 機種 |
-| macOS・iPadOS | Apple Developer の Releases RSS | 正式版のみ（ベータ・RC は除く） |
+| macOS・iPadOS | Apple Developer の Releases RSS | 正式バージョンのみ（ベータ・RC は除く） |
 | Windows 11 | Microsoft のリリース情報ページ | 機能更新（25H2 など）のみ |
 | Shure | 公式の「Software & Firmware Archive」をブラウザで表示して読む（一覧はページを開いたあとに読み込まれるため） | ULX-D・QLX-D・SLX-D・Axient Digital・MXW・MXA など 80 機種 |
 | **利用者の記録** | 誰かが「更新したことを記録する」で新しいバージョンを入れたら、同じ機種を持つ人に「あとで見る」で知らせる（誰が記録したかは共有しない） | すべての機種 |

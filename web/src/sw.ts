@@ -1,17 +1,22 @@
 /// <reference lib="webworker" />
 // 通知を受け取って表示する。画面のファイルは前もって保存しておき、電波がなくても開けるようにする
-import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching';
+import { precacheAndRoute, cleanupOutdatedCaches, matchPrecache } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
-import { CacheFirst } from 'workbox-strategies';
+import { CacheFirst, NetworkFirst } from 'workbox-strategies';
 
 declare const self: ServiceWorkerGlobalScope & { __WB_MANIFEST: any };
 
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
-registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html'), { denylist: [/^\/api\//, /^\/internal\//] }));
+// 画面の入口は毎回ネットから取りにいく（電波がないときだけ保存したものを使う）。
+// サービスワーカーの入れ替わりが遅れても、開き直せば新しいバージョンになる
+const entry = new NetworkFirst({ cacheName: 'entry', networkTimeoutSeconds: 4 });
+registerRoute(new NavigationRoute(async opts => {
+  try { return await entry.handle(opts); } catch { return (await matchPrecache('/index.html')) ?? Response.error(); }
+}, { denylist: [/^\/api\//, /^\/internal\//] }));
 registerRoute(({ request }) => request.destination === 'font', new CacheFirst({ cacheName: 'fonts' }));
 
-// 新しい版は、画面から合図（入力中でないとき・ボタンを押したとき）を受けてから入れ替わる
+// 新しいバージョンは、画面から合図（入力中でないとき・ボタンを押したとき）を受けてから入れ替わる
 self.addEventListener('message', e => { if (e.data?.type === 'SKIP_WAITING') self.skipWaiting(); });
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 

@@ -44,7 +44,7 @@ function unxml(s) {
 
 /**
  * Apple Developer の Releases RSS（https://developer.apple.com/news/releases/rss/releases.rss）
- * 正式版（beta・RC を除く）の macOS / iPadOS を取り出す
+ * 正式バージョン（beta・RC を除く）の macOS / iPadOS を取り出す
  */
 export function parseAppleRss(xml) {
   const res = { 'os:macos': [], 'os:ipados': [] };

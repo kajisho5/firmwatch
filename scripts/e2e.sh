@@ -30,4 +30,4 @@ run() {
 run 通しの試験 env INTERNAL_TOKEN="$TOKEN" node test/e2e.mjs "http://127.0.0.1:$PORT"
 run パスキーの試験 node test/passkey.mjs "http://localhost:$PORT"
 run 通知の試験 node test/push.mjs "http://localhost:$PORT"
-run 版の切り替えの試験 node test/update.mjs "http://localhost:$PORT"
+run バージョンの切り替えの試験 node test/update.mjs "http://localhost:$PORT"

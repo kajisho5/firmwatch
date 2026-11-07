@@ -33,7 +33,7 @@ describe('Blackmagic の読み取り', () => {
     // 新しい順
     for (let i = 1; i < atem.length; i++) expect(compareVersions(atem[i - 1].version, atem[i].version)).toBeGreaterThan(0);
   });
-  it('ベータ版は入れない', () => {
+  it('ベータは入れない', () => {
     for (const list of Object.values(r)) for (const x of list as any[]) expect(x.title).not.toMatch(/beta/i);
   });
   it('SDK は入れない', () => {
@@ -45,7 +45,7 @@ describe('Blackmagic の読み取り', () => {
 });
 
 describe('OS の読み取り', () => {
-  it('Apple：正式版の macOS と iPadOS だけ', () => {
+  it('Apple：正式バージョンの macOS と iPadOS だけ', () => {
     const r = parseAppleRss(fx('apple-releases.rss'));
     expect(r['os:macos'].length).toBeGreaterThan(0);
     for (const x of [...r['os:macos'], ...r['os:ipados']]) {

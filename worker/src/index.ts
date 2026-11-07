@@ -3,6 +3,7 @@ import { compareVersions } from '../../shared/version.js';
 import { Env, HttpError, now, randomId, str, date } from './util';
 import { currentUser, logout, registerOptions, registerVerify, loginOptions, loginVerify, recover, newRecoveryCode, startSession } from './auth';
 import { ingest, pushResult } from './internal';
+import { vapid, verifyGithubOidc } from './keys';
 
 type V = { Bindings: Env; Variables: { userId: string } };
 const app = new Hono<V>();
@@ -36,7 +37,7 @@ app.post('/api/auth/login/options', async c => c.json(await loginOptions(c)));
 app.post('/api/auth/login/verify', async c => { await loginVerify(c, await body(c)); return c.json({ ok: true }); });
 app.post('/api/auth/recover', async c => { await recover(c, await body(c)); return c.json({ ok: true }); });
 app.post('/api/auth/logout', async c => { await logout(c); return c.json({ ok: true }); });
-app.get('/api/push/vapid', c => c.json({ key: c.env.VAPID_PUBLIC_KEY }));
+app.get('/api/push/vapid', async c => c.json({ key: (await vapid(c.env)).publicKey }));
 
 // 開発用ログイン（DEV_AUTH=1 かつ localhost のときだけ）
 app.post('/api/dev/login', async c => {
@@ -281,6 +282,9 @@ app.post('/api/alerts/read-all', async c => {
 // ---- 定期チェックからの受け口（GitHub Actions） ----
 async function internalAuth(c: any) {
   const tok = c.req.header('Authorization')?.replace(/^Bearer /, '') ?? '';
+  // 本番：GitHub Actions が発行した証明で確かめる（人が鍵を作って入れなくてよい）
+  if (tok.split('.').length === 3) { await verifyGithubOidc(tok, c.env.GITHUB_REPOSITORY); return; }
+  // ローカルの試験：INTERNAL_TOKEN が入っているときだけ
   const want = c.env.INTERNAL_TOKEN ?? '';
   if (!want || want.length < 32 || tok.length !== want.length) throw new HttpError(401, '鍵が違います。');
   const a = new TextEncoder().encode(tok), b = new TextEncoder().encode(want);
@@ -291,7 +295,9 @@ async function internalAuth(c: any) {
 app.post('/internal/ingest', async c => {
   await internalAuth(c);
   const b = await body(c);
-  return c.json(await ingest(c.env, Array.isArray(b.checked) ? b.checked : []));
+  const r = await ingest(c.env, Array.isArray(b.checked) ? b.checked : []);
+  // 通知を送るための鍵も渡す（送るのは GitHub Actions 側）
+  return c.json({ ...r, vapid: await vapid(c.env) });
 });
 app.post('/internal/push-result', async c => {
   await internalAuth(c);

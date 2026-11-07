@@ -47,17 +47,17 @@ Cloudflare Workers ＋ Hono 4.13 ＋ D1 ／ React 19 ＋ Vite 8 ＋ Tailwind CSS
 
 ## 公開のしかた
 
-GitHub のリポジトリに、次の Secrets と Variables を入れると、main に入るたびに自動で公開されます。
+GitHub のリポジトリの Secrets に次の2つを入れると、main に入るたびに Cloudflare へ自動で公開されます。
 
-| 種類 | 名前 | 中身 |
-|---|---|---|
-| Secret | `CLOUDFLARE_API_TOKEN` | Cloudflare の API トークン（Workers の編集と D1 の編集ができるもの） |
-| Secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare のアカウント ID |
-| Secret | `FIRMWATCH_INTERNAL_TOKEN` | 定期チェック用の鍵（64文字のランダムな英数字） |
-| Secret | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | 通知用の鍵（`npx web-push generate-vapid-keys` で作る） |
-| Variable | `FIRMWATCH_URL` | 公開した URL（例 `https://firmwatch.xxxx.workers.dev`） |
+| 名前 | 中身 |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare の API トークン（Workers の編集と D1 の編集ができるもの） |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare のアカウント ID |
 
-公開で作る・変えるのは、Worker「firmwatch」と D1「firmwatch」だけです。同じアカウントにある別のシステムには触れません。
+- 公開先は `https://firmwatch.<アカウントのサブドメイン>.workers.dev` です。
+- 通知用の鍵（VAPID）はサーバーが初回に自分で作って保存します。
+- 定期チェックの本人確認は GitHub Actions の証明（OIDC）で行います。`kajisho5/firmwatch` の main からの実行だけを受け付けます。
+- 公開で作る・変えるのは、Worker「firmwatch」と D1「firmwatch」だけです。同じアカウントにある別のシステムには触れません。
 
 ## 開発
 

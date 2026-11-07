@@ -2,8 +2,8 @@ export interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
   RP_NAME: string;
-  VAPID_PUBLIC_KEY: string;
-  INTERNAL_TOKEN: string;   // 定期チェック（GitHub Actions）だけが使う鍵
+  GITHUB_REPOSITORY: string; // 定期チェックを受け付けるリポジトリ（例 kajisho5/firmwatch）。GitHub Actions の証明で本人確認する
+  INTERNAL_TOKEN?: string;   // ローカルの試験用の鍵（本番では入れない）
   DEV_AUTH?: string;        // "1" で localhost だけ開発用ログインを許す
 }
 

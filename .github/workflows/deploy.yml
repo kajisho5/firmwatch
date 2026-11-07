@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  actions: write
 concurrency: { group: deploy, cancel-in-progress: false }
 jobs:
   deploy:
@@ -39,6 +40,8 @@ jobs:
           npx wrangler d1 migrations apply firmwatch --remote
       - name: 配置
         if: steps.ready.outputs.go == '1'
-        run: |
-          npx wrangler deploy --var "VAPID_PUBLIC_KEY:${{ secrets.VAPID_PUBLIC_KEY }}"
-          printf '%s' "${{ secrets.FIRMWATCH_INTERNAL_TOKEN }}" | npx wrangler secret put INTERNAL_TOKEN
+        run: npx wrangler deploy
+      - name: 公開直後に1回チェックを回す
+        if: steps.ready.outputs.go == '1'
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: gh workflow run check.yml --ref main || echo "定期チェックは次の予定時刻に動きます"

@@ -1,7 +1,8 @@
 // 定期チェック：メーカー・OS の公開情報を読み、FIRMWATCH に渡し、返ってきた通知を送る
 // 使い方：node checker/run.mjs            … 取得してから通知
 //        node checker/run.mjs --digest   … 取得はせず、まとめ通知の時刻になった人にだけ送る
-// 必要な環境変数：FIRMWATCH_URL, FIRMWATCH_INTERNAL_TOKEN, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT
+// 必要な環境変数：FIRMWATCH_URL。本人確認は GitHub Actions の証明（OIDC）で行う。
+// ローカルで試すときだけ FIRMWATCH_INTERNAL_TOKEN を使う。通知用の鍵はサーバーから受け取る
 //
 // 各サイトの robots.txt は 2026-11-07 に確認済み：
 //   Blackmagic Design の /api/support/ は禁止されていない（crawl-delay: 1）
@@ -44,10 +45,22 @@ export async function collect() {
   return checked;
 }
 
+/** GitHub Actions の証明（OIDC）を取る。ローカルでは FIRMWATCH_INTERNAL_TOKEN を使う */
+async function authToken() {
+  const { ACTIONS_ID_TOKEN_REQUEST_URL: url, ACTIONS_ID_TOKEN_REQUEST_TOKEN: rt, FIRMWATCH_INTERNAL_TOKEN: local } = process.env;
+  if (url && rt) {
+    const r = await fetch(`${url}&audience=firmwatch`, { headers: { Authorization: `Bearer ${rt}` } });
+    if (!r.ok) throw new Error(`GitHub の証明を取れませんでした（${r.status}）。ワークフローに id-token: write があるか確かめてください`);
+    return (await r.json()).value;
+  }
+  if (local) return local;
+  throw new Error('GitHub Actions の外では FIRMWATCH_INTERNAL_TOKEN を設定してください');
+}
+
 async function main() {
   const base = process.env.FIRMWATCH_URL?.replace(/\/$/, '');
-  const token = process.env.FIRMWATCH_INTERNAL_TOKEN;
-  if (!base || !token) throw new Error('FIRMWATCH_URL と FIRMWATCH_INTERNAL_TOKEN を設定してください');
+  if (!base) throw new Error('FIRMWATCH_URL を設定してください');
+  const token = await authToken();
   const digestOnly = process.argv.includes('--digest');
   const checked = digestOnly ? [] : await collect();
   for (const c of checked) console.log(c.ok ? `OK   ${c.key}  最新 ${c.releases[0].version}` : `失敗 ${c.key}  ${c.error}`);
@@ -56,13 +69,12 @@ async function main() {
     method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ checked }),
   });
   if (!res.ok) throw new Error(`FIRMWATCH への送信に失敗しました（${res.status}）：${await res.text()}`);
-  const { summary, pushes } = await res.json();
+  const { summary, pushes, vapid } = await res.json();
   for (const [k, v] of Object.entries(summary)) if (v.added) console.log(`新しいバージョン ${k}：${v.added} 件（通知 ${v.alerted} 件）`);
 
   if (!pushes.length) return console.log('送る通知はありません');
-  const { VAPID_PUBLIC_KEY: pub, VAPID_PRIVATE_KEY: priv, VAPID_SUBJECT: subj } = process.env;
-  if (!pub || !priv) throw new Error('VAPID_PUBLIC_KEY と VAPID_PRIVATE_KEY を設定してください');
-  webpush.setVapidDetails(subj || 'https://github.com/kajisho5/firmwatch', pub, priv);
+  if (!vapid?.publicKey || !vapid?.privateKey) throw new Error('通知用の鍵を受け取れませんでした');
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'https://github.com/kajisho5/firmwatch', vapid.publicKey, vapid.privateKey);
   const gone = [];
   let sent = 0;
   for (const p of pushes) {

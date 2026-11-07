@@ -1,5 +1,6 @@
 # 定期チェック：メーカー・OS の公開情報を読み、新しいバージョンを通知する
 # 6時間ごとに取得、毎時15分に「あとで見る」のまとめ通知だけを確認する
+# 本人確認は GitHub Actions の証明（OIDC）で行うので、鍵を作って入れる必要はない
 name: 定期チェック
 on:
   schedule:
@@ -8,6 +9,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  id-token: write
 concurrency: { group: check, cancel-in-progress: false }
 jobs:
   check:
@@ -17,14 +19,23 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
-      - run: npm ci --omit=optional
-      - name: チェックして通知
+      - run: npm ci
+      - name: 公開先の URL を調べる
+        id: url
         env:
-          FIRMWATCH_URL: ${{ vars.FIRMWATCH_URL }}
-          FIRMWATCH_INTERNAL_TOKEN: ${{ secrets.FIRMWATCH_INTERNAL_TOKEN }}
-          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
-          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          FIXED_URL: ${{ vars.FIRMWATCH_URL }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$FIXED_URL" ]; then echo "url=$FIXED_URL" >> $GITHUB_OUTPUT; exit 0; fi
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then echo "まだ公開されていないので何もしません"; exit 0; fi
+          SUB=$(curl -sf -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).result.subdomain||'')}catch{console.log('')}})")
+          if [ -z "$SUB" ]; then echo "公開先の URL が分かりませんでした"; exit 1; fi
+          echo "url=https://firmwatch.$SUB.workers.dev" >> $GITHUB_OUTPUT
+      - name: チェックして通知
+        if: steps.url.outputs.url != ''
+        env:
+          FIRMWATCH_URL: ${{ steps.url.outputs.url }}
           VAPID_SUBJECT: https://github.com/${{ github.repository }}
         run: |
-          if [ -z "$FIRMWATCH_URL" ]; then echo "まだ公開されていないので何もしません"; exit 0; fi
           if [ "${{ github.event.schedule }}" = "15 * * * *" ]; then node checker/run.mjs --digest; else node checker/run.mjs; fi

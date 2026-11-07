@@ -5,9 +5,8 @@ cd "$(dirname "$0")/.."
 PORT=${PORT:-8788}
 if curl -s -o /dev/null "http://127.0.0.1:$PORT"; then echo "ポート $PORT が使われています。止めてからやり直してください" >&2; exit 1; fi
 TOKEN=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-PUB=$(node -e "console.log(require('web-push').generateVAPIDKeys().publicKey)")
 STATE=$(mktemp -d)
-printf 'DEV_AUTH=1\nINTERNAL_TOKEN=%s\nVAPID_PUBLIC_KEY=%s\n' "$TOKEN" "$PUB" > "$STATE/.dev.vars"
+printf 'DEV_AUTH=1\nINTERNAL_TOKEN=%s\n' "$TOKEN" > "$STATE/.dev.vars"
 [ -d dist ] || npx vite build >/dev/null
 npx wrangler d1 migrations apply firmwatch --local --persist-to "$STATE" >/dev/null
 npx wrangler dev --port "$PORT" --ip 127.0.0.1 --persist-to "$STATE" --env-file "$STATE/.dev.vars" > "$STATE/wrangler.log" 2>&1 &

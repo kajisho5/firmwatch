@@ -16,7 +16,7 @@
   ],
   "vars": {
     "RP_NAME": "FIRMWATCH",
-    "VAPID_PUBLIC_KEY": ""
+    "GITHUB_REPOSITORY": "kajisho5/firmwatch"
   },
   "observability": { "enabled": true }
 }

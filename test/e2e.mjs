@@ -79,6 +79,18 @@ const sev = al.severity;
 if (sev === 'now') { assert.ok(second.data.pushes.some(p => p.endpoint.endsWith(run))); ok('確認が要る更新はすぐ送る'); }
 else { assert.ok(!second.data.pushes.some(p => p.endpoint.endsWith(run))); ok('あとで見る更新はすぐには送らない'); }
 
+// サーバーが作った通知用の鍵で、送信内容を作れる
+const { data: { vapid } } = await internal('/internal/ingest', { checked: [] });
+const vapidPub = (await a('/api/push/vapid')).data.key;
+{
+  const { createECDH, randomBytes } = await import('node:crypto');
+  const webpush = await import('web-push');
+  const e = createECDH('prime256v1'); e.generateKeys();
+  const rq = webpush.generateRequestDetails({ endpoint: 'https://push.example.invalid/y', keys: { p256dh: e.getPublicKey('base64url'), auth: randomBytes(16).toString('base64url') } }, 'x', { vapidDetails: { subject: 'https://github.com/kajisho5/firmwatch', publicKey: vapid.publicKey, privateKey: vapid.privateKey } });
+  assert.equal(vapid.publicKey, vapidPub); assert.ok(rq.headers.Authorization);
+}
+assert.equal(Buffer.from(vapidPub, 'base64url').length, 65); ok('通知用の鍵をサーバーが自分で作り、画面と定期チェックに同じ鍵を渡す');
+
 // 同じ内容をもう一度：重ねて通知しない
 const third = await internal('/internal/ingest', { checked: [{ key: 'bmd:atem:ATEM Switchers', ok: true, releases: atem }] });
 assert.equal(third.data.summary['bmd:atem:ATEM Switchers'].added, 0); ok('同じバージョンで重ねて通知しない');

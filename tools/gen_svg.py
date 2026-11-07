@@ -504,6 +504,34 @@ def b4():
     return "".join(o)
 
 
+# ---------------- アプリ自体の更新のお知らせ（トースト、2026-11-07 の案） ----------------
+
+def toast(y, text, sub=None, action=None, close=True):
+    h = 64 if sub else 52
+    o = [f'<rect x="12" y="{y+3}" width="366" height="{h}" rx="10" fill="#000" opacity=".18"/>',
+         r(12, y, 366, h, 10, "#16191C")]
+    o.append(t(28, y + (26 if sub else 32), text, 15, WHITE, 600))
+    if sub:
+        o.append(t(28, y + 48, sub, 12.5, "#AEB4BA"))
+    x = 362
+    if close:
+        cx, cy = x - 10, y + h / 2
+        o.append(f'<path d="M{cx-5} {cy-5} l10 10 M{cx+5} {cy-5} l-10 10" stroke="#AEB4BA" stroke-width="1.8" stroke-linecap="round"/>')
+        x -= 32
+    if action:
+        w = len(action) * 15 + 24
+        o.append(r(x - w, y + (h - 36) / 2, w, 36, 6, WHITE) + t(x - w / 2, y + h / 2 + 5, action, 14, INK, 700, "middle"))
+    return "".join(o)
+
+
+def t1():
+    return s1() + toast(684, "新しいバージョンがあります", "0.6.0 → 0.6.1", "更新する")
+
+
+def t2():
+    return s1() + toast(696, "0.6.1 に更新しました", None, None, close=False)
+
+
 def sheet(screens, title, path):
     n = len(screens)
     tw = n * W + (n + 1) * GAP
@@ -530,3 +558,5 @@ if __name__ == "__main__":
           "そのほかの画面", d / "design-sub.svg")
     sheet([("B1", "ジャンルから選ぶ", b1), ("B2", "ジャンルの中の種類", b2), ("B3", "種類の中の機種", b3), ("B4", "メーカーから選ぶ", b4)],
           "機材を追加：ジャンル・メーカーから選ぶ（案）", d / "design-browse.svg")
+    sheet([("T1", "使っている途中に見つかったとき", t1), ("T2", "開いたとき・戻ったときに切り替えた後", t2)],
+          "アプリ自体の更新のお知らせ（案）", d / "design-toast.svg")

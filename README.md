@@ -27,7 +27,7 @@
 - 2026-11-07 に主なメーカーの 45 機種で試したところ、13 機種（Yamaha、Sennheiser、AJA、Behringer、Roland、TASCAM、Datavideo）でバージョンを読み取れました。
 - Roland は更新ページ（/support/）が禁止されているため読みません。製品ページは禁止されておらず、「System Program Ver.○○」が載っているので、そこを読みます。
 
-機種のリスト（12,592機種）は、[HOLDLINE](https://github.com/kajisho5/holdline) の機材カタログから取り込んでいます（`tools/import_holdline_catalog.py` → `tools/build_seed.py`）。
+機種のリスト（11,781機種）は、[HOLDLINE](https://github.com/kajisho5/holdline) の機材カタログから取り込んでいます（`tools/import_holdline_catalog.py` → `tools/build_seed.py`）。
 
 ## しくみ
 

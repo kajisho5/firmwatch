@@ -54,6 +54,8 @@ const genres = (await a('/api/browse')).data.items;
 assert.equal(genres[0].name, '映像'); assert.ok(genres.length >= 7 && genres[0].examples.length === 3); ok('ジャンルの一覧（機種の多い順・種類の例つき）');
 const subs = (await a('/api/browse?cat=' + encodeURIComponent('映像'))).data.items;
 assert.ok(subs.some(x => x.name === 'スイッチャー' && x.n > 100)); ok('ジャンルの中の種類');
+const pcs = (await a('/api/browse?cat=PC')).data.items.map(x => x.name);
+assert.ok(!pcs.includes('ノートPC') && pcs.includes('書画カメラ')); ok('ファームがまずない種類は外れている');
 const sw = (await a('/api/models?cat=' + encodeURIComponent('映像') + '&sub=' + encodeURIComponent('スイッチャー'))).data.models;
 assert.ok(sw.length > 100 && sw.every(m => m.sub === 'スイッチャー') && sw.some(m => m.model === 'V-160HD')); ok('種類の中の機種（検索語なしで一覧）');
 const swMakers = (await a('/api/browse?cat=' + encodeURIComponent('映像') + '&sub=' + encodeURIComponent('スイッチャー'))).data.items;
